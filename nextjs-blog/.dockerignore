@@ -1,0 +1,20 @@
+# Ignore node modules and dependencies
+node_modules
+npm-debug.log
+package-lock.json
+
+# Ignore build files (Next.js specific build folder)
+.next
+
+# Ignore environment variables
+.env
+.env.local
+.env.development
+.env.production
+
+# Ignore Git and editor files
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
