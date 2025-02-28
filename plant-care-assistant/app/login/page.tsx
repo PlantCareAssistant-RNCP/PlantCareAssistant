@@ -33,12 +33,12 @@ export default function LoginPage() {
                 />
                 <input
                     type="password"
-                    placeholder="Mot de passe"
+                    placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                 />
-                <button type="submit">Se connecter</button>
+                <button type="submit">Login</button>
             </form>
             {message && <p>{message}</p>}
         </div>

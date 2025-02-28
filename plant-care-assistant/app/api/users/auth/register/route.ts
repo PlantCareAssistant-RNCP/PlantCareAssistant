@@ -4,9 +4,9 @@
 //     const { email, password } = await req.json();
 
 //     if (!email || !password) {
-//         return NextResponse.json({ message: "Champs requis" }, { status: 400 });
+//         return NextResponse.json({ message: "Field required" }, { status: 400 });
 //     }
 
 //     // Ici, normalement, on enregistrerait l'utilisateur dans une base de données
-//     return NextResponse.json({ message: "Inscription réussie !" }, { status: 201 });
+//     return NextResponse.json({ message: "Registration successful !" }, { status: 201 });
 // }
