@@ -5,6 +5,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --color-leaf: #54cc5f; /* Success */
+  --color-plant: #13ad7f; /* Primary */
+  --color-teal: #077d7f; /* Accent */
+  --color-dark: #095f71; /* Deep UI */
+  --color-darkest: #081c2b; /* Background, Text */
 }
 
 @media (prefers-color-scheme: dark) {
