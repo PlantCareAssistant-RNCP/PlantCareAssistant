@@ -1,7 +1,19 @@
-import React from "react";
+'use client'
+import React, { useState } from "react";
 import Image from "next/image";
+import Login from "../LoginView/Login";
 
 const Landing = () => {
+  const [isLoginModal, setIsLoginModal] = useState(false);
+
+  const openLoginModal = () => {
+    setIsLoginModal(true);
+  };
+
+  const closeLoginModal = () => {
+    setIsLoginModal(false);
+  };
+
   return (
     <div
       className="bg-cover bg-center h-screen flex justify-center items-center relative"
@@ -19,15 +31,32 @@ const Landing = () => {
           <h1 className="text-5xl mb-5 text-leaf">Plant Care Assistant</h1>
           <div className="flex justify-around w-full mt-5">
             {/* Placeholder for login/register components */}
-            <div className="bg-white bg-opacity-20 p-5 rounded-lg w-[45%]">
+            <div
+              className="bg-white bg-opacity-20 p-5 rounded-lg w-[45%] cursor-pointer"
+              onClick={openLoginModal}
+            >
               Login Component
             </div>
-            <div className="bg-white bg-opacity-20 p-5 rounded-lg w-[45%]">
+            <div className="bg-white bg-opacity-20 p-5 rounded-lg w-[45%] cursor-pointer">
               Register Component
             </div>
           </div>
         </div>
       </div>
+      {/*Modal for Login*/}
+      {isLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-lg relative">
+            <button
+              className="absolute top-2 right-2 text-white"
+              onClick={closeLoginModal}
+            >
+              ✖
+            </button>
+            <Login />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
