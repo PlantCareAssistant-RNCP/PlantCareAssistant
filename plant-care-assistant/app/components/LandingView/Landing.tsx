@@ -1,10 +1,12 @@
-'use client'
+"use client";
 import React, { useState } from "react";
 import Image from "next/image";
 import Login from "../LoginView/Login";
+import Registration from "../RegistrationView/Registration";
 
 const Landing = () => {
   const [isLoginModal, setIsLoginModal] = useState(false);
+  const [isRegistrationModal, setIsRegistrationModal] = useState(false);
 
   const openLoginModal = () => {
     setIsLoginModal(true);
@@ -12,6 +14,14 @@ const Landing = () => {
 
   const closeLoginModal = () => {
     setIsLoginModal(false);
+  };
+
+  const openRegistrationModal = () => {
+    setIsRegistrationModal(true);
+  };
+
+  const closeRegistrationModal = () => {
+    setIsRegistrationModal(false);
   };
 
   return (
@@ -37,7 +47,10 @@ const Landing = () => {
             >
               Login Component
             </div>
-            <div className="bg-white bg-opacity-20 p-5 rounded-lg w-[45%] cursor-pointer">
+            <div
+              className="bg-white bg-opacity-20 p-5 rounded-lg w-[45%] cursor-pointer"
+              onClick={openRegistrationModal}
+            >
               Register Component
             </div>
           </div>
@@ -54,6 +67,20 @@ const Landing = () => {
               ✖
             </button>
             <Login />
+          </div>
+        </div>
+      )}
+
+      {isRegistrationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-lg relative">
+            <button
+              className="absolute top-2 right-2 text-white"
+              onClick={closeRegistrationModal}
+            >
+              ✖
+            </button>
+            <Registration />
           </div>
         </div>
       )}
