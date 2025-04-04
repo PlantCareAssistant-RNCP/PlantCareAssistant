@@ -44,8 +44,3 @@ export default function LoginPage() {
         </div>
     );
 }
-
-// export default function Login() {
-//     return <div>Login page</div>;
-// }
-
