@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../database/my-database.db"
+}
+
+model Comment {
+  comment_id Int       @id @default(autoincrement())
+  content    String
+  user_id    Int
+  post_id    Int
+  photo      String?
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+  deleted_at DateTime?
+  POST       Post      @relation(fields: [post_id], references: [post_id], onDelete: Cascade, onUpdate: NoAction)
+  USER       User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+	@@map("COMMENT")
+}
+
+model Likes {
+  post_id    Int
+  user_id    Int
+  created_at DateTime  @default(now())
+  deleted_at DateTime?
+  USER       User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  POST       Post      @relation(fields: [post_id], references: [post_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([post_id, user_id])
+	@@map("LIKES")
+}
+
+model Plant {
+  plant_id      Int          @id @default(autoincrement())
+  plant_name    String
+  user_id       Int
+  plant_type_id Int
+  photo         String
+  created_at    DateTime     @default(now())
+  updated_at    DateTime?
+  deleted_at    DateTime?
+  PLANT_TYPE    PlantType   @relation(fields: [plant_type_id], references: [plant_type_id], onDelete: Cascade, onUpdate: NoAction)
+  USER          User         @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  POST          Post[]
+  USER_PLANT    UserPlant[]
+	@@map("PLANT")
+}
+
+model PlantType {
+  plant_type_id   Int       @id @default(autoincrement())
+  plant_type_name String
+  created_at      DateTime  @default(now())
+  updated_at      DateTime?
+  deleted_at      DateTime?
+  PLANT           Plant[]
+	@@map("PLANT_TYPE")
+}
+
+model Post {
+  post_id    Int          @id @default(autoincrement())
+  title      String
+  content    String
+  photo      String?
+  user_id    Int
+  plant_id   Int
+  created_at DateTime     @default(now())
+  updated_at DateTime?
+  deleted_at DateTime?
+  COMMENT    Comment[]
+  LIKES      Likes[]
+  PLANT      Plant        @relation(fields: [plant_id], references: [plant_id], onDelete: Cascade, onUpdate: NoAction)
+  USER       User         @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  USERS_POST UsersPost[]
+	@@map("POST")
+}
+
+model User {
+  user_id       Int          @id @default(autoincrement())
+  username      String       @unique(map: "sqlite_autoindex_USER_1")
+  email         String       @unique(map: "sqlite_autoindex_USER_2")
+  password_hash String
+  created_at    DateTime     @default(now())
+  updated_at    DateTime?
+  deleted_at    DateTime?
+  COMMENT       Comment[]
+  LIKES         Likes[]
+  PLANT         Plant[]
+  POST          Post[]
+  USERS_POST    UsersPost[]
+  USER_PLANT    UserPlant[]
+	@@map("USER")
+}
+
+model UsersPost {
+  user_id Int
+  post_id Int
+  POST    Post @relation(fields: [post_id], references: [post_id], onDelete: Cascade, onUpdate: NoAction)
+  USER    User @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, post_id])
+	@@map("USERS_POST")
+}
+
+model UserPlant {
+  user_id  Int
+  plant_id Int
+  PLANT    Plant @relation(fields: [plant_id], references: [plant_id], onDelete: Cascade, onUpdate: NoAction)
+  USER     User  @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, plant_id])
+	@@map("USER_PLANT")
+}
