@@ -34,7 +34,7 @@ const Registration: React.FC = () => {
 //       alert("An error occurred. Please try again.");
 //     }
 //   };
-const handleSubmit = (event) => {
+const handleSubmit = (event:React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     console.log(formData)
   };
