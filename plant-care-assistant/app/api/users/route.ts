@@ -52,9 +52,32 @@ export async function GET(req: Request) {
   }
 }
 
-// Create a new user (registration)
+/**
+ * Creates a new user (ADMIN ONLY)
+ * 
+ * Note: This endpoint is for administrative user creation.
+ * Regular user registration should use /api/auth/register instead.
+ */
 export async function POST(req: Request) {
   try {
+    if (!isAuthenticated()) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    // Check if the current user is an admin
+    const currentUserId = getCurrentUserId(req);
+    const currentUser = await prisma.user.findFirst({ 
+      where: { 
+        user_id: currentUserId,
+        deleted_at: null 
+      } 
+    });
+    
+    // As there is no isAdmin role currently, we will need to consider implementing it.
+    // Currently locked down, auth/register works for creating users
+    if (!currentUser?.isAdmin) {
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+    }
+
     const body = await req.json();
 
     // Validate required fields
