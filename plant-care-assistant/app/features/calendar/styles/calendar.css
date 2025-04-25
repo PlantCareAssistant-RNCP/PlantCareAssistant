@@ -1,0 +1,21 @@
+.rbc-calendar {
+    background-color: #ffffff; /* White background */
+    color: #333333; /* Dark text */
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .rbc-toolbar {
+    background-color: #1a6404; /* Dark toolbar */
+    color: #ffffff;
+    padding: 10px;
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .rbc-event {
+    background-color: #48bb78; /* Green for events */
+    color: #ffffff;
+    border: 2px solid grey;
+    border-radius: 4px;
+    padding: 2px 4px;
+  }
