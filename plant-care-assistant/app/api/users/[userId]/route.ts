@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { validateEmail, validationErrorResponse } from "@/utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -74,6 +75,79 @@ export async function PUT(
     }
 
     const body = await req.json();
+
+    // 1. Validate username if provided
+    if (body.username !== undefined) {
+      if (typeof body.username !== "string") {
+        return NextResponse.json(
+          { error: "Username must be a string" },
+          { status: 400 }
+        );
+      }
+
+      if (body.username.length < 3) {
+        return NextResponse.json(
+          { error: "Username must be at least 3 characters long" },
+          { status: 400 }
+        );
+      }
+
+      if (body.username.length > 30) {
+        return NextResponse.json(
+          { error: "Username cannot exceed 30 characters" },
+          { status: 400 }
+        );
+      }
+
+      if (!/^[a-zA-Z0-9_]+$/.test(body.username)) {
+        return NextResponse.json(
+          {
+            error:
+              "Username can only contain letters, numbers, and underscores",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 2. Validate email if provided
+    if (body.email !== undefined) {
+      const emailError = validateEmail(body.email);
+      if (emailError) {
+        return validationErrorResponse(emailError);
+      }
+    }
+
+    // 3. Validate password if provided
+    if (body.password !== undefined) {
+      if (typeof body.password !== "string") {
+        return NextResponse.json(
+          { error: "Password must be a string" },
+          { status: 400 }
+        );
+      }
+
+      if (body.password.length < 8) {
+        return NextResponse.json(
+          { error: "Password must be at least 8 characters long" },
+          { status: 400 }
+        );
+      }
+
+      const hasUpperCase = /[A-Z]/.test(body.password);
+      const hasLowerCase = /[a-z]/.test(body.password);
+      const hasNumbers = /\d/.test(body.password);
+
+      if (!(hasUpperCase && hasLowerCase && hasNumbers)) {
+        return NextResponse.json(
+          {
+            error:
+              "Password must contain uppercase letters, lowercase letters, and numbers",
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     // Check if user exists
     const existingUser = await prisma.user.findFirst({
