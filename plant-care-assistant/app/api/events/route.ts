@@ -35,6 +35,18 @@ export async function POST(req: Request) {
     const userId = getCurrentUserId(req);
     const body = await req.json();
 
+    const plant = await prisma.plant.findUnique({
+      where: {plant_id: body.plantId},
+    })
+
+    if(!plant){
+      return NextResponse.json({error:"Plant not found"},{status:404});
+    }
+
+    if(plant.user_id !== userId){
+      return NextResponse.json({error:"Forbidden: You do not own this plant"},{status: 403})
+    }
+
     const newEvent = await prisma.event.create({
       data: {
         title: body.title,
