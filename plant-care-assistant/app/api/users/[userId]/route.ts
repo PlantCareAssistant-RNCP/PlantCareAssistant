@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getCurrentUserId, isAuthenticated } from "@utils/auth";
-import { validateEmail, validationErrorResponse } from "@/utils/validation";
+import {
+  validationErrorResponse,
+  isValidationError,
+  validatePartialUser,
+} from "@/utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -76,77 +80,19 @@ export async function PUT(
 
     const body = await req.json();
 
-    // 1. Validate username if provided
-    if (body.username !== undefined) {
-      if (typeof body.username !== "string") {
-        return NextResponse.json(
-          { error: "Username must be a string" },
-          { status: 400 }
-        );
-      }
+    const validationResult = validatePartialUser(body);
 
-      if (body.username.length < 3) {
-        return NextResponse.json(
-          { error: "Username must be at least 3 characters long" },
-          { status: 400 }
-        );
-      }
-
-      if (body.username.length > 30) {
-        return NextResponse.json(
-          { error: "Username cannot exceed 30 characters" },
-          { status: 400 }
-        );
-      }
-
-      if (!/^[a-zA-Z0-9_]+$/.test(body.username)) {
-        return NextResponse.json(
-          {
-            error:
-              "Username can only contain letters, numbers, and underscores",
-          },
-          { status: 400 }
-        );
-      }
+    // Check if validation failed
+    if (isValidationError(validationResult)) {
+      return validationErrorResponse(validationResult);
     }
 
-    // 2. Validate email if provided
-    if (body.email !== undefined) {
-      const emailError = validateEmail(body.email);
-      if (emailError) {
-        return validationErrorResponse(emailError);
-      }
-    }
-
-    // 3. Validate password if provided
-    if (body.password !== undefined) {
-      if (typeof body.password !== "string") {
-        return NextResponse.json(
-          { error: "Password must be a string" },
-          { status: 400 }
-        );
-      }
-
-      if (body.password.length < 8) {
-        return NextResponse.json(
-          { error: "Password must be at least 8 characters long" },
-          { status: 400 }
-        );
-      }
-
-      const hasUpperCase = /[A-Z]/.test(body.password);
-      const hasLowerCase = /[a-z]/.test(body.password);
-      const hasNumbers = /\d/.test(body.password);
-
-      if (!(hasUpperCase && hasLowerCase && hasNumbers)) {
-        return NextResponse.json(
-          {
-            error:
-              "Password must contain uppercase letters, lowercase letters, and numbers",
-          },
-          { status: 400 }
-        );
-      }
+    // If validation passed but no fields to update were provided
+    if (Object.keys(validationResult).length === 0) {
+      return NextResponse.json(
+        { error: "No valid fields to update" },
+        { status: 400 }
+      );
     }
 
     // Check if user exists
@@ -162,12 +108,14 @@ export async function PUT(
     }
 
     // Check if new username or email already exists
-    if (body.username || body.email) {
+    if (validationResult.username || validationResult.email) {
       const conflicts = await prisma.user.findFirst({
         where: {
           OR: [
-            body.username ? { username: body.username } : {},
-            body.email ? { email: body.email } : {},
+            validationResult.username
+              ? { username: validationResult.username }
+              : {},
+            validationResult.email ? { email: validationResult.email } : {},
           ],
           NOT: { user_id: targetUserId },
           deleted_at: null,
@@ -188,16 +136,17 @@ export async function PUT(
     };
 
     // Only update fields that are provided
-    if (body.username) updateData.username = body.username;
-    if (body.email) updateData.email = body.email;
+    if (validationResult.username)
+      updateData.username = validationResult.username;
+    if (validationResult.email) updateData.email = validationResult.email;
 
     // If updating password, hash it
     // In production, you would use bcrypt:
     // if (body.password) {
     //   updateData.password_hash = await bcrypt.hash(body.password, 10);
     // }
-    if (body.password) {
-      updateData.password_hash = body.password; // Temporary for development
+if (validationResult.password) {
+      updateData.password_hash = validationResult.password; // Temporary for development
     }
 
     // Update the user
