@@ -10,6 +10,8 @@ import Feed from '@/assets/icons/feed_icon.svg';
 import Home from '@/assets/icons/home_icon.svg';
 import Schedule from '@/assets/icons/schedule_icon.svg';
 import Search from '@/assets/icons/search_icon.svg';
+import Dashboard from '@/assets/icons/dashboard_icon.svg';
+
 
 const icons = {
   arrowLeft: ArrowLeft,
