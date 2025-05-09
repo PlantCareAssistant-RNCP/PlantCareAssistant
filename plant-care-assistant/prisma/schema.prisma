@@ -18,7 +18,8 @@ model Comment {
   deleted_at DateTime?
   POST       Post      @relation(fields: [post_id], references: [post_id], onDelete: Cascade, onUpdate: NoAction)
   USER       User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
-	@@map("COMMENT")
+
+  @@map("COMMENT")
 }
 
 model Likes {
@@ -30,23 +31,25 @@ model Likes {
   POST       Post      @relation(fields: [post_id], references: [post_id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([post_id, user_id])
-	@@map("LIKES")
+  @@map("LIKES")
 }
 
 model Plant {
-  plant_id      Int          @id @default(autoincrement())
+  plant_id      Int         @id @default(autoincrement())
   plant_name    String
   user_id       Int
   plant_type_id Int
   photo         String
-  created_at    DateTime     @default(now())
+  created_at    DateTime    @default(now())
   updated_at    DateTime?
   deleted_at    DateTime?
   PLANT_TYPE    PlantType   @relation(fields: [plant_type_id], references: [plant_type_id], onDelete: Cascade, onUpdate: NoAction)
-  USER          User         @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  USER          User        @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
   POST          Post[]
   USER_PLANT    UserPlant[]
-	@@map("PLANT")
+  Event         Event[]
+
+  @@map("PLANT")
 }
 
 model PlantType {
@@ -56,33 +59,35 @@ model PlantType {
   updated_at      DateTime?
   deleted_at      DateTime?
   PLANT           Plant[]
-	@@map("PLANT_TYPE")
+
+  @@map("PLANT_TYPE")
 }
 
 model Post {
-  post_id    Int          @id @default(autoincrement())
+  post_id    Int         @id @default(autoincrement())
   title      String
   content    String
   photo      String?
   user_id    Int
   plant_id   Int
-  created_at DateTime     @default(now())
+  created_at DateTime    @default(now())
   updated_at DateTime?
   deleted_at DateTime?
   COMMENT    Comment[]
   LIKES      Likes[]
-  PLANT      Plant        @relation(fields: [plant_id], references: [plant_id], onDelete: Cascade, onUpdate: NoAction)
-  USER       User         @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  PLANT      Plant       @relation(fields: [plant_id], references: [plant_id], onDelete: Cascade, onUpdate: NoAction)
+  USER       User        @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
   USERS_POST UsersPost[]
-	@@map("POST")
+
+  @@map("POST")
 }
 
 model User {
-  user_id       Int          @id @default(autoincrement())
-  username      String       @unique(map: "sqlite_autoindex_USER_1")
-  email         String       @unique(map: "sqlite_autoindex_USER_2")
+  user_id       Int         @id @default(autoincrement())
+  username      String      @unique(map: "sqlite_autoindex_USER_1")
+  email         String      @unique(map: "sqlite_autoindex_USER_2")
   password_hash String
-  created_at    DateTime     @default(now())
+  created_at    DateTime    @default(now())
   updated_at    DateTime?
   deleted_at    DateTime?
   COMMENT       Comment[]
@@ -91,7 +96,9 @@ model User {
   POST          Post[]
   USERS_POST    UsersPost[]
   USER_PLANT    UserPlant[]
-	@@map("USER")
+  Event         Event[]
+
+  @@map("USER")
 }
 
 model UsersPost {
@@ -101,7 +108,7 @@ model UsersPost {
   USER    User @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([user_id, post_id])
-	@@map("USERS_POST")
+  @@map("USERS_POST")
 }
 
 model UserPlant {
@@ -111,5 +118,20 @@ model UserPlant {
   USER     User  @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([user_id, plant_id])
-	@@map("USER_PLANT")
+  @@map("USER_PLANT")
+}
+
+model Event {
+  id        Int      @id @default(autoincrement())
+  title     String
+  start     DateTime
+  end       DateTime
+  user      User     @relation(fields: [userId], references: [user_id])
+  userId    Int
+  plant     Plant?   @relation(fields: [plantId], references: [plant_id])
+  plantId   Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("EVENT")
 }
