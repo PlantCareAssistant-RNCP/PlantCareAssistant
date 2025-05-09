@@ -1,36 +1,17 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+// app/layout.tsx
+import './globals.css'
+import { ReactNode } from 'react'
+import Header from '@/components/layout/header'
+import Footer from '@/components/layout/footer'
 
-import "../styles/globals.css";
-
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "Plant Care Assistant",
-  description: "Helping beginners tend to their plants",
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang="fr">
+      <body className="bg-[#06141B] text-white min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 overflow-y-auto">{children}</main>
+        <Footer />
       </body>
     </html>
-  );
+  )
 }

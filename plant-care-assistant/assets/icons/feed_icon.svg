@@ -1,6 +1,8 @@
-<svg width="34" height="46" viewBox="0 0 34 46" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M2 4V42C2 43.1046 2.89543 44 4 44H30C31.1046 44 32 43.1046 32 42V4C32 2.89543 31.1046 2 30 2H4C2.89543 2 2 2.89543 2 4Z" stroke="white" stroke-width="3"/>
-<path d="M7 10H17" stroke="white" stroke-width="3"/>
-<path d="M7 17H23" stroke="white" stroke-width="3"/>
-<path d="M25 23H9C7.89543 23 7 23.8954 7 25V36C7 37.1046 7.89543 38 9 38H25C26.1046 38 27 37.1046 27 36V25C27 23.8954 26.1046 23 25 23Z" stroke="white" stroke-width="3"/>
+<svg viewBox="0 0 34 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Feed icon">
+<path id="Vector 8" d="M2 4V42C2 43.1046 2.89543 44 4 44H30C31.1046 44 32 43.1046 32 42V4C32 2.89543 31.1046 2 30 2H4C2.89543 2 2 2.89543 2 4Z" stroke="#0A9788" stroke-width="3"/>
+<path id="Vector 9" d="M7 10H17" stroke="#0A9788" stroke-width="3"/>
+<path id="Vector 10" d="M7 17H23" stroke="#0A9788" stroke-width="3"/>
+<path id="Vector 11" d="M25 23H9C7.89543 23 7 23.8954 7 25V36C7 37.1046 7.89543 38 9 38H25C26.1046 38 27 37.1046 27 36V25C27 23.8954 26.1046 23 25 23Z" stroke="#0A9788" stroke-width="3"/>
+</g>
 </svg>
