@@ -13,9 +13,10 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@svgr/webpack": "^8.1.0",
     "autoprefixer": "^10.4.20",
     "luxon": "^3.6.1",
-    "next": "15.1.7",
+    "next": "^15.3.2",
     "react": "^19.0.0",
     "react-big-calendar": "^1.18.0",
     "react-dom": "^19.0.0"
