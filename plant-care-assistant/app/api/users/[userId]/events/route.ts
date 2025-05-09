@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { 
+  validateEvent, 
+  isValidationError, 
+  validationErrorResponse 
+} from "@/utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -117,18 +122,17 @@ export async function POST(
     const body = await req.json();
 
     // Validate required fields
-    if (!body.title || !body.start || !body.end) {
-      return NextResponse.json(
-        { error: "Title, start time, and end time are required" },
-        { status: 400 }
-      );
+    const validationResult = validateEvent(body);
+    
+    if (isValidationError(validationResult)) {
+      return validationErrorResponse(validationResult);
     }
 
     // If plantId is provided, verify it exists and belongs to this user
-    if (body.plantId) {
+    if (validationResult.plantId) {
       const plantExists = await prisma.plant.findFirst({
         where: {
-          plant_id: body.plantId,
+          plant_id: validationResult.plantId,
           user_id: targetUserId,
           deleted_at: null,
         },
@@ -145,11 +149,11 @@ export async function POST(
     // Create the event
     const newEvent = await prisma.event.create({
       data: {
-        title: body.title,
-        start: new Date(body.start),
-        end: new Date(body.end),
+        title: validationResult.title,
+        start: new Date(validationResult.start),
+        end: new Date(validationResult.end),
         userId: targetUserId,
-        plantId: body.plantId || null,
+        plantId: validationResult.plantId || null,
       },
     });
 

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { 
+  validatePlant, 
+  isValidationError, 
+  validationErrorResponse 
+} from "@/utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -100,21 +105,19 @@ export async function POST(
 
     const body = await req.json();
 
-    // Validate required fields
-    if (!body.plant_name || !body.plant_type_id) {
-      return NextResponse.json(
-        { error: "Plant name and plant type are required" },
-        { status: 400 }
-      );
+    const validationResult = validatePlant(body);
+    
+    if (isValidationError(validationResult)) {
+      return validationErrorResponse(validationResult);
     }
 
     // Create the plant
     const newPlant = await prisma.plant.create({
       data: {
-        plant_name: body.plant_name,
+        plant_name: validationResult.plant_name,
         user_id: targetUserId,
-        plant_type_id: body.plant_type_id,
-        photo: body.photo || "default_plant.jpg",
+        plant_type_id: validationResult.plant_type_id,
+        photo: validationResult.photo || "default_plant.jpg",
         created_at: new Date(),
         updated_at: null,
         deleted_at: null
