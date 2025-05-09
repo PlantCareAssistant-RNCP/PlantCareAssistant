@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { validatePost, isValidationError, validationErrorResponse } from "@/utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -12,20 +13,22 @@ export async function GET(req: Request) {
     }
 
     const url = new URL(req.url);
-    const userId = url.searchParams.get('userId') ? 
-      parseInt(url.searchParams.get('userId')!) : undefined;
-    const plantId = url.searchParams.get('plantId') ? 
-      parseInt(url.searchParams.get('plantId')!) : undefined;
+    const userId = url.searchParams.get("userId")
+      ? parseInt(url.searchParams.get("userId")!)
+      : undefined;
+    const plantId = url.searchParams.get("plantId")
+      ? parseInt(url.searchParams.get("plantId")!)
+      : undefined;
 
     // Build where clause for filtering
     const where: Prisma.PostWhereInput = {
-      deleted_at: null
+      deleted_at: null,
     };
-    
+
     if (userId) {
       where.user_id = userId;
     }
-    
+
     if (plantId) {
       where.plant_id = plantId;
     }
@@ -36,8 +39,8 @@ export async function GET(req: Request) {
         USER: {
           select: {
             user_id: true,
-            username: true
-          }
+            username: true,
+          },
         },
         PLANT: true,
         _count: {
@@ -45,15 +48,15 @@ export async function GET(req: Request) {
             COMMENT: true,
             LIKES: {
               where: {
-                deleted_at: null
-              }
-            }
-          }
-        }
+                deleted_at: null,
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        created_at: 'desc'
-      }
+        created_at: "desc",
+      },
     });
 
     return NextResponse.json(posts, { status: 200 });
@@ -77,20 +80,22 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     // Validate required fields
-    if (!body.title || !body.content || !body.plant_id) {
-      return NextResponse.json(
-        { error: "Title, content, and plant_id are required" },
-        { status: 400 }
-      );
+    const validationResult = validatePost(body);
+
+    // Check if validation failed
+    if (isValidationError(validationResult)) {
+      return validationErrorResponse(validationResult);
     }
+
+    const validPost = validationResult;
 
     // Verify the plant exists and belongs to the user
     const plant = await prisma.plant.findFirst({
       where: {
-        plant_id: body.plant_id,
+        plant_id: validPost.plant_id,
         user_id: userId,
-        deleted_at: null
-      }
+        deleted_at: null,
+      },
     });
 
     if (!plant) {
@@ -103,23 +108,23 @@ export async function POST(req: Request) {
     // Create the post
     const newPost = await prisma.post.create({
       data: {
-        title: body.title,
-        content: body.content,
-        photo: body.photo,
+        title: validPost.title,
+        content: validPost.content,
+        photo: validPost.photo,
         user_id: userId,
-        plant_id: body.plant_id,
+        plant_id: validPost.plant_id,
         created_at: new Date(),
         updated_at: null,
-        deleted_at: null
-      }
+        deleted_at: null,
+      },
     });
 
     // Also create the USERS_POST relationship
     await prisma.usersPost.create({
       data: {
         user_id: userId,
-        post_id: newPost.post_id
-      }
+        post_id: newPost.post_id,
+      },
     });
 
     return NextResponse.json(newPost, { status: 201 });

@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { 
+  validateId, 
+  validateComment, 
+  isValidationError, 
+  validationErrorResponse 
+} from "@/utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -14,7 +20,12 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const commentId = parseInt(params.commentId);
+    // Validate IDs
+    const commentIdResult = validateId(params.commentId);
+    if (isValidationError(commentIdResult)) {
+      return validationErrorResponse(commentIdResult);
+    }
+    const commentId = commentIdResult;
 
     const comment = await prisma.comment.findFirst({
       where: {
@@ -56,16 +67,23 @@ export async function PUT(
     }
 
     const userId = getCurrentUserId(req);
-    const commentId = parseInt(params.commentId);
+    
+    // Validate commentId
+    const commentIdResult = validateId(params.commentId);
+    if (isValidationError(commentIdResult)) {
+      return validationErrorResponse(commentIdResult);
+    }
+    const commentId = commentIdResult;
+    
     const body = await req.json();
 
-    // Validate required fields
-    if (!body.content) {
-      return NextResponse.json(
-        { error: "Comment content is required" },
-        { status: 400 }
-      );
+    // Validate comment data
+    const validationResult = validateComment(body);
+    if (isValidationError(validationResult)) {
+      return validationErrorResponse(validationResult);
     }
+    
+    const validComment = validationResult;
 
     // Check if comment exists and belongs to user
     const existingComment = await prisma.comment.findFirst({
@@ -83,12 +101,12 @@ export async function PUT(
       );
     }
 
-    // Update the comment
+    // Update the comment with validated data
     const updatedComment = await prisma.comment.update({
       where: { comment_id: commentId },
       data: {
-        content: body.content,
-        photo: body.photo,
+        content: validComment.content,
+        photo: validComment.photo,
         updated_at: new Date()
       }
     });
@@ -114,7 +132,13 @@ export async function DELETE(
     }
 
     const userId = getCurrentUserId(req);
-    const commentId = parseInt(params.commentId);
+    
+    // Validate commentId
+    const commentIdResult = validateId(params.commentId);
+    if (isValidationError(commentIdResult)) {
+      return validationErrorResponse(commentIdResult);
+    }
+    const commentId = commentIdResult;
 
     // Check if comment exists and belongs to user
     const existingComment = await prisma.comment.findFirst({

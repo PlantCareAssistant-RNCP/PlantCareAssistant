@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { validateId, validateComment, isValidationError, validationErrorResponse } from "@/utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -14,7 +15,12 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const postId = parseInt(params.postId);
+    // Validate postId using helper function
+    const postIdResult = validateId(params.postId);
+    if (isValidationError(postIdResult)) {
+      return validationErrorResponse(postIdResult);
+    }
+    const postId = postIdResult;
 
     // Check if post exists
     const post = await prisma.post.findFirst({
@@ -68,16 +74,23 @@ export async function POST(
     }
 
     const userId = getCurrentUserId(req);
-    const postId = parseInt(params.postId);
+    
+    // Validate postId using helper function
+    const postIdResult = validateId(params.postId);
+    if (isValidationError(postIdResult)) {
+      return validationErrorResponse(postIdResult);
+    }
+    const postId = postIdResult;
+    
     const body = await req.json();
 
-    // Validate required fields
-    if (!body.content) {
-      return NextResponse.json(
-        { error: "Comment content is required" },
-        { status: 400 }
-      );
+    // Validate comment using the validation utility
+    const validationResult = validateComment(body);
+    if (isValidationError(validationResult)) {
+      return validationErrorResponse(validationResult);
     }
+    
+    const validComment = validationResult;
 
     // Check if post exists
     const post = await prisma.post.findFirst({
@@ -91,13 +104,13 @@ export async function POST(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Create the comment
+    // Create the comment with validated data
     const newComment = await prisma.comment.create({
       data: {
-        content: body.content,
+        content: validComment.content,
         user_id: userId,
         post_id: postId,
-        photo: body.photo || null,
+        photo: validComment.photo || null,
         created_at: new Date(),
         updated_at: null,
         deleted_at: null

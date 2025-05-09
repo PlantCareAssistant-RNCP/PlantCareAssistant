@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { isValidationError, validationErrorResponse,validateId } from "@/utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -14,14 +15,19 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const postId = parseInt(params.postId);
+    // Validate postId
+    const postIdResult = validateId(params.postId);
+    if (isValidationError(postIdResult)) {
+      return validationErrorResponse(postIdResult);
+    }
+    const postId = postIdResult;
 
     // Check if post exists
     const post = await prisma.post.findFirst({
       where: {
         post_id: postId,
-        deleted_at: null
-      }
+        deleted_at: null,
+      },
     });
 
     if (!post) {
@@ -32,16 +38,16 @@ export async function GET(
     const likes = await prisma.likes.findMany({
       where: {
         post_id: postId,
-        deleted_at: null
+        deleted_at: null,
       },
       include: {
         USER: {
           select: {
             user_id: true,
-            username: true
-          }
-        }
-      }
+            username: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json(likes, { status: 200 });
@@ -65,14 +71,20 @@ export async function POST(
     }
 
     const userId = getCurrentUserId(req);
-    const postId = parseInt(params.postId);
+
+    // Validate postId
+    const postIdResult = validateId(params.postId);
+    if (isValidationError(postIdResult)) {
+      return validationErrorResponse(postIdResult);
+    }
+    const postId = postIdResult;
 
     // Check if post exists
     const post = await prisma.post.findFirst({
       where: {
         post_id: postId,
-        deleted_at: null
-      }
+        deleted_at: null,
+      },
     });
 
     if (!post) {
@@ -84,9 +96,9 @@ export async function POST(
       where: {
         post_id_user_id: {
           post_id: postId,
-          user_id: userId
-        }
-      }
+          user_id: userId,
+        },
+      },
     });
 
     if (existingLike) {
@@ -96,12 +108,12 @@ export async function POST(
           where: {
             post_id_user_id: {
               post_id: postId,
-              user_id: userId
-            }
+              user_id: userId,
+            },
           },
           data: {
-            deleted_at: null
-          }
+            deleted_at: null,
+          },
         });
         return NextResponse.json({ message: "Post liked" }, { status: 200 });
       }
@@ -113,17 +125,14 @@ export async function POST(
       data: {
         post_id: postId,
         user_id: userId,
-        created_at: new Date()
-      }
+        created_at: new Date(),
+      },
     });
 
     return NextResponse.json({ message: "Post liked" }, { status: 201 });
   } catch (error: unknown) {
     console.error(error);
-    return NextResponse.json(
-      { error: "Failed to like post" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to like post" }, { status: 500 });
   }
 }
 
@@ -138,16 +147,22 @@ export async function DELETE(
     }
 
     const userId = getCurrentUserId(req);
-    const postId = parseInt(params.postId);
+
+    // Validate postId
+    const postIdResult = validateId(params.postId);
+    if (isValidationError(postIdResult)) {
+      return validationErrorResponse(postIdResult);
+    }
+    const postId = postIdResult;
 
     // Check if like exists
     const existingLike = await prisma.likes.findUnique({
       where: {
         post_id_user_id: {
           post_id: postId,
-          user_id: userId
-        }
-      }
+          user_id: userId,
+        },
+      },
     });
 
     if (!existingLike || existingLike.deleted_at) {
@@ -162,12 +177,12 @@ export async function DELETE(
       where: {
         post_id_user_id: {
           post_id: postId,
-          user_id: userId
-        }
+          user_id: userId,
+        },
       },
       data: {
-        deleted_at: new Date()
-      }
+        deleted_at: new Date(),
+      },
     });
 
     return NextResponse.json(
