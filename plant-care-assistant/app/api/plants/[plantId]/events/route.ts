@@ -10,9 +10,9 @@ export async function GET(
   { params }: { params: { plantId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+if (!isAuthenticated(request)) {  // or request in some files
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
 
     const userId = getCurrentUserId(request);
     const plantId = parseInt(params.plantId);
@@ -53,7 +53,7 @@ export async function POST(
   { params }: { params: { plantId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

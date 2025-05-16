@@ -4,13 +4,13 @@ import { getCurrentUserId, isAuthenticated } from "@utils/auth";
 
 const prisma = new PrismaClient();
 
-export async function GET(req: Request) {
+export async function GET(request: Request) {
     try {
-        if (!isAuthenticated()) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+    if (!isAuthenticated(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-        const userId = getCurrentUserId(req);
+        const userId = getCurrentUserId(request);
 
         const user = await prisma.user.findFirst({
             where: { 

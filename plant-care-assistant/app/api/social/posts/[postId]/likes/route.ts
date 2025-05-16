@@ -7,11 +7,11 @@ const prisma = new PrismaClient();
 
 // Get all likes for a post
 export async function GET(
-  req: Request,
+  request: Request,
   { params }: { params: { postId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -62,15 +62,15 @@ export async function GET(
 
 // Like a post (create or restore a like)
 export async function POST(
-  req: Request,
+  request: Request,
   { params }: { params: { postId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(req);
+    const userId = getCurrentUserId(request);
 
     // Validate postId
     const postIdResult = validateId(params.postId);
@@ -138,15 +138,15 @@ export async function POST(
 
 // Unlike a post (soft delete)
 export async function DELETE(
-  req: Request,
+  request: Request,
   { params }: { params: { postId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(req);
+    const userId = getCurrentUserId(request);
 
     // Validate postId
     const postIdResult = validateId(params.postId);

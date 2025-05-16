@@ -6,14 +6,13 @@ const prisma = new PrismaClient();
 
 // Get a single event
 export async function GET(
-  req: Request,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    // Optional: Add authentication check if you want to restrict event viewing
-    // if (!isAuthenticated()) {
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
+    if (!isAuthenticated(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     
     const id = parseInt(params.id);
     
@@ -41,17 +40,17 @@ export async function GET(
 
 // Update an event
 export async function PUT(
-  req: Request,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     // Check if the user is authenticated
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
     // Get the current user ID for authorization checks
-    const userId = getCurrentUserId(req);
+    const userId = getCurrentUserId(request);
     const id = parseInt(params.id);
     
     // First check if the event exists and belongs to this user
@@ -68,7 +67,7 @@ export async function PUT(
       return NextResponse.json({ error: "Not authorized to modify this event" }, { status: 403 });
     }
     
-    const body = await req.json();
+    const body = await request.json();
     
     const updatedEvent = await prisma.event.update({
       where: { id },
@@ -92,17 +91,17 @@ export async function PUT(
 
 // Delete an event
 export async function DELETE(
-  req: Request,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     // Check if the user is authenticated
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
     // Get the current user ID for authorization checks
-    const userId = getCurrentUserId(req);
+    const userId = getCurrentUserId(request);
     const id = parseInt(params.id);
     
     // First check if the event exists and belongs to this user

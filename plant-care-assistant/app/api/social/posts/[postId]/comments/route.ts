@@ -7,11 +7,11 @@ const prisma = new PrismaClient();
 
 // Get all comments for a specific post
 export async function GET(
-  req: Request,
+  request: Request,
   { params }: { params: { postId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -65,15 +65,15 @@ export async function GET(
 
 // Create a new comment on a post
 export async function POST(
-  req: Request,
+  request: Request,
   { params }: { params: { postId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(req);
+    const userId = getCurrentUserId(request);
     
     // Validate postId using helper function
     const postIdResult = validateId(params.postId);
@@ -82,7 +82,7 @@ export async function POST(
     }
     const postId = postIdResult;
     
-    const body = await req.json();
+    const body = await request.json();
 
     // Validate comment using the validation utility
     const validationResult = validateComment(body);

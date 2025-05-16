@@ -12,11 +12,11 @@ const prisma = new PrismaClient();
 
 // Get a single comment
 export async function GET(
-  req: Request,
+  request: Request,
   { params }: { params: { postId: string; commentId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -58,15 +58,15 @@ export async function GET(
 
 // Update a comment
 export async function PUT(
-  req: Request,
+  request: Request,
   { params }: { params: { postId: string; commentId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(req);
+    const userId = getCurrentUserId(request);
     
     // Validate commentId
     const commentIdResult = validateId(params.commentId);
@@ -75,7 +75,7 @@ export async function PUT(
     }
     const commentId = commentIdResult;
     
-    const body = await req.json();
+    const body = await request.json();
 
     // Validate comment data
     const validationResult = validateComment(body);
@@ -123,15 +123,15 @@ export async function PUT(
 
 // Delete a comment (soft delete)
 export async function DELETE(
-  req: Request,
+  request: Request,
   { params }: { params: { postId: string; commentId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(req);
+    const userId = getCurrentUserId(request);
     
     // Validate commentId
     const commentIdResult = validateId(params.commentId);

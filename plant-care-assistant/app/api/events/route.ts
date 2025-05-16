@@ -5,14 +5,14 @@ import { getCurrentUserId, isAuthenticated } from "@utils/auth";
 const prisma = new PrismaClient();
 
 // List all events (optionally for a specific user)
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId();
-
+    const userId = getCurrentUserId(request);
+    
     const events = await prisma.event.findMany({
       where: { userId },
       include: { plant: true }
@@ -26,14 +26,14 @@ export async function GET() {
 }
 
 // Create a new event
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(req);
-    const body = await req.json();
+    const userId = getCurrentUserId(request);
+    const body = await request.json();
 
     const plant = await prisma.plant.findUnique({
       where: {plant_id: body.plantId},

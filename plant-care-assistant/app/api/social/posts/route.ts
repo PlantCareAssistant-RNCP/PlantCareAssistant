@@ -6,13 +6,13 @@ import { validatePost, isValidationError, validationErrorResponse } from "@/util
 const prisma = new PrismaClient();
 
 // List posts (with optional filtering)
-export async function GET(req: Request) {
+export async function GET(request: Request) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const url = new URL(req.url);
+    const url = new URL(request.url);
     const userId = url.searchParams.get("userId")
       ? parseInt(url.searchParams.get("userId")!)
       : undefined;
@@ -70,14 +70,14 @@ export async function GET(req: Request) {
 }
 
 // Create a new post
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(req);
-    const body = await req.json();
+    const userId = getCurrentUserId(request);
+    const body = await request.json();
 
     // Validate required fields
     const validationResult = validatePost(body);

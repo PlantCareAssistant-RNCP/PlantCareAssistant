@@ -11,15 +11,15 @@ const prisma = new PrismaClient();
 
 // Get all events for a specific user
 export async function GET(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only view their own events unless they're admin
@@ -45,7 +45,7 @@ export async function GET(
     }
 
     // Parse query parameters for filtering
-    const url = new URL(req.url);
+    const url = new URL(request.url);
     const startDate = url.searchParams.get("startDate");
     const endDate = url.searchParams.get("endDate");
     const plantId = url.searchParams.get("plantId")
@@ -91,15 +91,15 @@ export async function GET(
 
 // Create a new event for a specific user
 export async function POST(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only create events for themselves
@@ -119,7 +119,7 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
 
     // Validate required fields
     const validationResult = validateEvent(body);

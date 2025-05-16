@@ -5,14 +5,14 @@ import { getCurrentUserId, isAuthenticated } from "@utils/auth";
 const prisma = new PrismaClient();
 
 // Get feed posts (posts from all users, with option to filter)
-export async function GET(req: Request) {
+export async function GET(request: Request) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(req);
-    const url = new URL(req.url);
+    const userId = getCurrentUserId(request);
+    const url = new URL(request.url);
     
     // Optional filters
     const limit = url.searchParams.get('limit') ? 

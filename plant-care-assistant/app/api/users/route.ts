@@ -10,20 +10,20 @@ import {
 const prisma = new PrismaClient();
 
 // List all users (with optional filtering)
-export async function GET(req: Request) {
+export async function GET(request: Request) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // In a real app, you might restrict this to admin users only
-    // const userId = getCurrentUserId(req);
+    // const userId = getCurrentUserId(request);
     // const currentUser = await prisma.user.findUnique({ where: { user_id: userId } });
     // if (!currentUser.isAdmin) {
     //   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     // }
 
-    const url = new URL(req.url);
+    const url = new URL(request.url);
     const username = url.searchParams.get("username");
 
     // Build where clause for filtering
@@ -63,13 +63,13 @@ export async function GET(req: Request) {
  * Note: This endpoint is for administrative user creation.
  * Regular user registration should use /api/auth/register instead.
  */
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     // Check if the current user is an admin
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const currentUser = await prisma.user.findFirst({
       where: {
         user_id: currentUserId,
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
+    const body = await request.json();
 
     // Validate required fields
     const validationResult = validateUser(body);

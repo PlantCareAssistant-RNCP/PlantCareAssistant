@@ -11,15 +11,15 @@ const prisma = new PrismaClient();
 
 // Get a single user by ID
 export async function GET(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only view their own profile unless they're admin
@@ -30,6 +30,7 @@ export async function GET(
       // if (!currentUser.isAdmin) {
       //   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       // }
+       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const user = await prisma.user.findFirst({
@@ -62,15 +63,15 @@ export async function GET(
 
 // Update a user
 export async function PUT(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only update their own profile
@@ -78,7 +79,7 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
 
     const validationResult = validatePartialUser(body);
 
@@ -174,15 +175,15 @@ if (validationResult.password) {
 
 // Delete a user (soft delete)
 export async function DELETE(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only delete their own account (unless admin)

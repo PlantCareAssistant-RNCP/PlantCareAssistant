@@ -11,15 +11,15 @@ const prisma = new PrismaClient();
 
 // Get all plants for a specific user
 export async function GET(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only view their own plants
@@ -40,7 +40,7 @@ export async function GET(
     }
 
     // Parse query parameters for filtering
-    const url = new URL(req.url);
+    const url = new URL(request.url);
     const plantType = url.searchParams.get('plantType') ? 
       parseInt(url.searchParams.get('plantType')!) : undefined;
 
@@ -75,15 +75,15 @@ export async function GET(
 
 // Create a new plant for a specific user
 export async function POST(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only create plants for themselves
@@ -103,7 +103,7 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
 
     const validationResult = validatePlant(body);
     
