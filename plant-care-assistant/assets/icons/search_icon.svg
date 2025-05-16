@@ -1,4 +1,6 @@
-<svg width="41" height="40" viewBox="0 0 41 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="17.5154" cy="17.5154" r="14.2622" transform="rotate(-2.63586 17.5154 17.5154)" stroke="white" stroke-width="5"/>
-<path d="M27.8006 27.0813L38.5661 37.2638" stroke="white" stroke-width="6"/>
+<svg viewBox="0 0 41 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="magnifying glass">
+<circle id="Ellipse 4" cx="17.5154" cy="17.5154" r="14.2622" transform="rotate(-2.63586 17.5154 17.5154)" stroke="#0A9788" stroke-width="5"/>
+<path id="Vector 3" d="M27.8006 27.0813L38.5661 37.2638" stroke="#0A9788" stroke-width="6"/>
+</g>
 </svg>
