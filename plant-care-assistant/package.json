@@ -13,6 +13,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@svgr/webpack": "^8.1.0",
     "autoprefixer": "^10.4.20",
     "luxon": "^3.6.1",
