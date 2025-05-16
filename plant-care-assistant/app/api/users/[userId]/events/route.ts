@@ -1,20 +1,25 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { 
+  validateEvent, 
+  isValidationError, 
+  validationErrorResponse 
+} from "@/utils/validation";
 
 const prisma = new PrismaClient();
 
 // Get all events for a specific user
 export async function GET(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only view their own events unless they're admin
@@ -40,7 +45,7 @@ export async function GET(
     }
 
     // Parse query parameters for filtering
-    const url = new URL(req.url);
+    const url = new URL(request.url);
     const startDate = url.searchParams.get("startDate");
     const endDate = url.searchParams.get("endDate");
     const plantId = url.searchParams.get("plantId")
@@ -86,15 +91,15 @@ export async function GET(
 
 // Create a new event for a specific user
 export async function POST(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only create events for themselves
@@ -114,21 +119,20 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
 
     // Validate required fields
-    if (!body.title || !body.start || !body.end) {
-      return NextResponse.json(
-        { error: "Title, start time, and end time are required" },
-        { status: 400 }
-      );
+    const validationResult = validateEvent(body);
+    
+    if (isValidationError(validationResult)) {
+      return validationErrorResponse(validationResult);
     }
 
     // If plantId is provided, verify it exists and belongs to this user
-    if (body.plantId) {
+    if (validationResult.plantId) {
       const plantExists = await prisma.plant.findFirst({
         where: {
-          plant_id: body.plantId,
+          plant_id: validationResult.plantId,
           user_id: targetUserId,
           deleted_at: null,
         },
@@ -145,11 +149,11 @@ export async function POST(
     // Create the event
     const newEvent = await prisma.event.create({
       data: {
-        title: body.title,
-        start: new Date(body.start),
-        end: new Date(body.end),
+        title: validationResult.title,
+        start: new Date(validationResult.start),
+        end: new Date(validationResult.end),
         userId: targetUserId,
-        plantId: body.plantId || null,
+        plantId: validationResult.plantId || null,
       },
     });
 

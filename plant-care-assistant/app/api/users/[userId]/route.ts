@@ -1,20 +1,25 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import {
+  validationErrorResponse,
+  isValidationError,
+  validatePartialUser,
+} from "@/utils/validation";
 
 const prisma = new PrismaClient();
 
 // Get a single user by ID
 export async function GET(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only view their own profile unless they're admin
@@ -25,6 +30,7 @@ export async function GET(
       // if (!currentUser.isAdmin) {
       //   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       // }
+       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const user = await prisma.user.findFirst({
@@ -57,15 +63,15 @@ export async function GET(
 
 // Update a user
 export async function PUT(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only update their own profile
@@ -73,7 +79,22 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
+
+    const validationResult = validatePartialUser(body);
+
+    // Check if validation failed
+    if (isValidationError(validationResult)) {
+      return validationErrorResponse(validationResult);
+    }
+
+    // If validation passed but no fields to update were provided
+    if (Object.keys(validationResult).length === 0) {
+      return NextResponse.json(
+        { error: "No valid fields to update" },
+        { status: 400 }
+      );
+    }
 
     // Check if user exists
     const existingUser = await prisma.user.findFirst({
@@ -88,12 +109,14 @@ export async function PUT(
     }
 
     // Check if new username or email already exists
-    if (body.username || body.email) {
+    if (validationResult.username || validationResult.email) {
       const conflicts = await prisma.user.findFirst({
         where: {
           OR: [
-            body.username ? { username: body.username } : {},
-            body.email ? { email: body.email } : {},
+            validationResult.username
+              ? { username: validationResult.username }
+              : {},
+            validationResult.email ? { email: validationResult.email } : {},
           ],
           NOT: { user_id: targetUserId },
           deleted_at: null,
@@ -114,16 +137,17 @@ export async function PUT(
     };
 
     // Only update fields that are provided
-    if (body.username) updateData.username = body.username;
-    if (body.email) updateData.email = body.email;
+    if (validationResult.username)
+      updateData.username = validationResult.username;
+    if (validationResult.email) updateData.email = validationResult.email;
 
     // If updating password, hash it
     // In production, you would use bcrypt:
     // if (body.password) {
     //   updateData.password_hash = await bcrypt.hash(body.password, 10);
     // }
-    if (body.password) {
-      updateData.password_hash = body.password; // Temporary for development
+if (validationResult.password) {
+      updateData.password_hash = validationResult.password; // Temporary for development
     }
 
     // Update the user
@@ -151,15 +175,15 @@ export async function PUT(
 
 // Delete a user (soft delete)
 export async function DELETE(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only delete their own account (unless admin)

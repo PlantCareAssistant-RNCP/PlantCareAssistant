@@ -1,20 +1,25 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { 
+  validatePlant, 
+  isValidationError, 
+  validationErrorResponse 
+} from "@/utils/validation";
 
 const prisma = new PrismaClient();
 
 // Get all plants for a specific user
 export async function GET(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only view their own plants
@@ -35,7 +40,7 @@ export async function GET(
     }
 
     // Parse query parameters for filtering
-    const url = new URL(req.url);
+    const url = new URL(request.url);
     const plantType = url.searchParams.get('plantType') ? 
       parseInt(url.searchParams.get('plantType')!) : undefined;
 
@@ -70,15 +75,15 @@ export async function GET(
 
 // Create a new plant for a specific user
 export async function POST(
-  req: Request,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(req);
+    const currentUserId = getCurrentUserId(request);
     const targetUserId = parseInt(params.userId);
 
     // Security: Users can only create plants for themselves
@@ -98,23 +103,21 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const body = await req.json();
+    const body = await request.json();
 
-    // Validate required fields
-    if (!body.plant_name || !body.plant_type_id) {
-      return NextResponse.json(
-        { error: "Plant name and plant type are required" },
-        { status: 400 }
-      );
+    const validationResult = validatePlant(body);
+    
+    if (isValidationError(validationResult)) {
+      return validationErrorResponse(validationResult);
     }
 
     // Create the plant
     const newPlant = await prisma.plant.create({
       data: {
-        plant_name: body.plant_name,
+        plant_name: validationResult.plant_name,
         user_id: targetUserId,
-        plant_type_id: body.plant_type_id,
-        photo: body.photo || "default_plant.jpg",
+        plant_type_id: validationResult.plant_type_id,
+        photo: validationResult.photo || "default_plant.jpg",
         created_at: new Date(),
         updated_at: null,
         deleted_at: null

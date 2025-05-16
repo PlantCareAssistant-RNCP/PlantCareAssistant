@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+// import { PrismaClient } from "@prisma/client";
 import { getCurrentUserId, isAuthenticated } from "@utils/auth";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
     // Check if user is authenticated
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(request)) {
       return NextResponse.json({ error: "Not logged in" }, { status: 401 });
     }
 
