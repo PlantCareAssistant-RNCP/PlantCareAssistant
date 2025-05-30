@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "EVENT" ALTER COLUMN "end" DROP NOT NULL;

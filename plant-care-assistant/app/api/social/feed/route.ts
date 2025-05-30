@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
-import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { getUserIdFromSupabase } from "@utils/auth";
 
 const prisma = new PrismaClient();
 
 // Get feed posts (posts from all users, with option to filter)
 export async function GET(request: Request) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(request);
     const url = new URL(request.url);
     
     // Optional filters
@@ -39,9 +39,8 @@ export async function GET(request: Request) {
       include: {
         USER: {
           select: {
-            user_id: true,
+            id: true,
             username: true,
-            // Don't include sensitive user data
           }
         },
         PLANT: {

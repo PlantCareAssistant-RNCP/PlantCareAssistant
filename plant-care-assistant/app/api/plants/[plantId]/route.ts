@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getCurrentUserId, isAuthenticated } from "@/utils/auth";
+import { getUserIdFromSupabase } from "@utils/auth";
 
 const prisma = new PrismaClient();
 
@@ -10,11 +10,11 @@ export async function GET(
   context: { params: { plantId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(request);
     const plantId = parseInt(context.params.plantId);
 
     const plant = await prisma.plant.findFirst({
@@ -49,11 +49,10 @@ export async function PUT(
   { params }: { params: { plantId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = getCurrentUserId(request);
     const plantId = parseInt(params.plantId);
     const body = await request.json();
 
@@ -97,11 +96,10 @@ export async function DELETE(
   { params }: { params: { plantId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = getCurrentUserId(request);
     const plantId = parseInt(params.plantId);
 
     // Check if plant exists and belongs to user
@@ -124,7 +122,7 @@ export async function DELETE(
     });
 
     return NextResponse.json(
-      { message: "Plant deleted successfully" },
+      { message: "Plant deleted successfully",plant: deletedPlant },
       { status: 200 }
     );
   } catch (error) {

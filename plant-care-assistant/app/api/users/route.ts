@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
-import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { getUserIdFromSupabase } from "@utils/auth";
 import {
   validateUser,
   isValidationError,
@@ -9,25 +9,17 @@ import {
 
 const prisma = new PrismaClient();
 
-// List all users (with optional filtering)
 export async function GET(request: Request) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    // In a real app, you might restrict this to admin users only
-    // const userId = getCurrentUserId(request);
-    // const currentUser = await prisma.user.findUnique({ where: { user_id: userId } });
-    // if (!currentUser.isAdmin) {
-    //   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    // }
 
     const url = new URL(request.url);
     const username = url.searchParams.get("username");
 
-    // Build where clause for filtering
-    const where: Prisma.UserWhereInput = {
+    const where: Prisma.UserProfileWhereInput = {
       deleted_at: null,
     };
 
@@ -35,15 +27,12 @@ export async function GET(request: Request) {
       where.username = { contains: username };
     }
 
-    // Get users with filtering
-    const users = await prisma.user.findMany({
+    const users = await prisma.userProfile.findMany({
       where,
       select: {
-        user_id: true,
+        id: true,
         username: true,
-        email: true,
         created_at: true,
-        // Exclude password_hash for security
       },
     });
 
@@ -57,28 +46,20 @@ export async function GET(request: Request) {
   }
 }
 
-/**
- * Creates a new user (ADMIN ONLY)
- *
- * Note: This endpoint is for administrative user creation.
- * Regular user registration should use /api/auth/register instead.
- */
 export async function POST(request: Request) {
   try {
-    if (!isAuthenticated(request)) {
+    const currentUserId = await getUserIdFromSupabase(request);
+    if (!currentUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    // Check if the current user is an admin
-    const currentUserId = getCurrentUserId(request);
-    const currentUser = await prisma.user.findFirst({
+
+    const currentUser = await prisma.userProfile.findFirst({
       where: {
-        user_id: currentUserId,
+        id: currentUserId,
         deleted_at: null,
       },
     });
 
-    // As there is no isAdmin role currently, we will need to consider implementing it.
-    // Currently locked down, auth/register works for creating users
     if (!currentUser?.isAdmin) {
       return NextResponse.json(
         { error: "Forbidden: Admin access required" },
@@ -88,18 +69,16 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    // Validate required fields
     const validationResult = validateUser(body);
     if (isValidationError(validationResult)) {
       return validationErrorResponse(validationResult);
     }
 
-    const validUser = validationResult
+    const validUser = validationResult;
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await prisma.userProfile.findFirst({
       where: {
-        OR: [{ username: validUser.username }, { email: validUser.email }],
+        username: validUser.username,
         deleted_at: null,
       },
     });
@@ -111,26 +90,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // In a real app, you would hash the password
-    // const hashedPassword = await bcrypt.hash(body.password, 10);
-    const hashedPassword = validUser.password; // Temporary for development
-
-    // Create the user
-    const newUser = await prisma.user.create({
+    const newUser = await prisma.userProfile.create({
       data: {
         username: body.username,
-        email: body.email,
-        password_hash: hashedPassword,
         created_at: new Date(),
         updated_at: null,
         deleted_at: null,
       },
       select: {
-        user_id: true,
+        id: true,
         username: true,
-        email: true,
         created_at: true,
-        // Again, don't return password_hash
       },
     });
 
