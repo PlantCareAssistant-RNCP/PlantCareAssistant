@@ -105,7 +105,7 @@ export async function POST(
       );
     }
 
-    const newLike = await prisma.likes.create({
+    await prisma.likes.create({
       data: {
         USER: {
           connect: { id: userId },
@@ -159,7 +159,7 @@ export async function DELETE(
     }
 
     // Delete the like record
-    const unliked = await prisma.likes.delete({
+    await prisma.likes.delete({
       where: {
         post_id_user_id: {
           post_id: postId,

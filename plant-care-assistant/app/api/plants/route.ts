@@ -69,8 +69,12 @@ export async function POST(request: Request) {
 
     await prisma.userPlant.create({
       data: {
-        user_id: userId,
-        plant_id: newPlant.plant_id,
+        USER: {
+          connect: { id: userId },
+        },
+        PLANT: {
+          connect: { plant_id: newPlant.plant_id },
+        },
       },
     });
 

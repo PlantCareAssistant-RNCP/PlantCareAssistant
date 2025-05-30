@@ -126,8 +126,12 @@ export async function POST(request: Request) {
 
     await prisma.usersPost.create({
       data: {
-        user_id: userId,
-        post_id: newPost.post_id,
+        USER: {
+          connect: { id: userId },
+        },
+        POST: {
+          connect: { post_id: newPost.post_id },
+        },
       },
     });
 
