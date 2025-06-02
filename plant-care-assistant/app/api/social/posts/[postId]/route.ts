@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { getUserIdFromSupabase } from "@utils/auth";
 import {
   isValidationError,
   validationErrorResponse,
   validatePartialPost,
-} from "@/utils/validation";
+} from "@utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -15,12 +15,12 @@ export async function GET(
   { params }: { params: { postId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const postId = parseInt(params.postId);
-    const userId = getCurrentUserId(request);
 
     const post = await prisma.post.findFirst({
       where: {
@@ -30,7 +30,7 @@ export async function GET(
       include: {
         USER: {
           select: {
-            user_id: true,
+            id: true,
             username: true,
           },
         },
@@ -46,7 +46,7 @@ export async function GET(
           include: {
             USER: {
               select: {
-                user_id: true,
+                id: true,
                 username: true,
               },
             },
@@ -95,11 +95,11 @@ export async function PUT(
   { params }: { params: { postId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(request);
     const postId = parseInt(params.postId);
     const body = await request.json();
 
@@ -160,11 +160,11 @@ export async function DELETE(
   { params }: { params: { postId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(request);
     const postId = parseInt(params.postId);
 
     // Check if post exists and belongs to user

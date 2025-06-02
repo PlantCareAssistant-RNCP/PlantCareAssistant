@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "USER_PROFILE" ADD COLUMN     "isAdmin" BOOLEAN NOT NULL DEFAULT false;

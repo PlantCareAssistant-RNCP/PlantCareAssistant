@@ -1,21 +1,24 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
-import { getCurrentUserId, isAuthenticated } from "@utils/auth";
-import { validatePost, isValidationError, validationErrorResponse } from "@/utils/validation";
+import { getUserIdFromSupabase } from "@utils/auth";
+import {
+  validatePost,
+  isValidationError,
+  validationErrorResponse,
+} from "@utils/validation";
 
 const prisma = new PrismaClient();
 
 // List posts (with optional filtering)
 export async function GET(request: Request) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const url = new URL(request.url);
-    const userId = url.searchParams.get("userId")
-      ? parseInt(url.searchParams.get("userId")!)
-      : undefined;
+    const userIdParam = url.searchParams.get("userId") || undefined;
     const plantId = url.searchParams.get("plantId")
       ? parseInt(url.searchParams.get("plantId")!)
       : undefined;
@@ -25,8 +28,8 @@ export async function GET(request: Request) {
       deleted_at: null,
     };
 
-    if (userId) {
-      where.user_id = userId;
+    if (userIdParam) {
+      where.user_id = url.searchParams.get("userId")!;
     }
 
     if (plantId) {
@@ -38,7 +41,7 @@ export async function GET(request: Request) {
       include: {
         USER: {
           select: {
-            user_id: true,
+            id: true,
             username: true,
           },
         },
@@ -72,17 +75,15 @@ export async function GET(request: Request) {
 // Create a new post
 export async function POST(request: Request) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(request);
     const body = await request.json();
 
-    // Validate required fields
     const validationResult = validatePost(body);
 
-    // Check if validation failed
     if (isValidationError(validationResult)) {
       return validationErrorResponse(validationResult);
     }
@@ -111,19 +112,26 @@ export async function POST(request: Request) {
         title: validPost.title,
         content: validPost.content,
         photo: validPost.photo,
-        user_id: userId,
-        plant_id: validPost.plant_id,
+        USER: {
+          connect: { id: userId },
+        },
+        PLANT: {
+          connect: { plant_id: validPost.plant_id },
+        },
         created_at: new Date(),
         updated_at: null,
         deleted_at: null,
       },
     });
 
-    // Also create the USERS_POST relationship
     await prisma.usersPost.create({
       data: {
-        user_id: userId,
-        post_id: newPost.post_id,
+        USER: {
+          connect: { id: userId },
+        },
+        POST: {
+          connect: { post_id: newPost.post_id },
+        },
       },
     });
 

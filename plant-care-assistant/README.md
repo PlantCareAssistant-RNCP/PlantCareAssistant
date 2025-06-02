@@ -53,8 +53,9 @@ Plant Care Assistant is a Next.js application designed to help users manage thei
 
 - **Backend**
   - [Next.js API Routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) - Serverless functions for backend operations
-  - [Prisma](https://www.prisma.io/docs/) - Next-generation ORM for database access
-  - [SQLite](https://www.sqlite.org/docs.html) - Embedded database
+  - [Prisma](https://www.prisma.io/docs/) - ORM for database access
+  - [Supabase](https://supabase.com/docs) - Backend-as-a-service with auth and security features
+  - [PostgreSQL](https://www.postgresql.org/docs/) - Relational database
 
 - **Development Tools**
   - [TypeScript](https://www.typescriptlang.org/docs/) - Static type-checking
@@ -64,30 +65,63 @@ Plant Care Assistant is a Next.js application designed to help users manage thei
 
 ```
 plant-care-assistant/
-├── app/                   # Next.js App Router structure
-│   ├── api/               # API routes
-│   │   ├── events/        # Calendar events API endpoints
-│   │   └── users/         # User management API endpoints
-│   ├── dashboard/         # Dashboard page
-│   ├── features/          # Feature-specific pages
-│   │   ├── feed/          # Social feed page
-│   │   ├── login/         # User login page
-│   │   └── register/      # User registration page
-│   ├── homepage/          # Main application homepage
-│   ├── userprofile/       # User profile page
-│   └── utils/             # Utility functions
-│       └── auth.ts        # Authentication utilities
-├── components/            # Reusable React components
-│   ├── LandingView/       # Landing page components
-│   ├── LoginView/         # Login components
-│   └── RegistrationView/  # Registration components
-├── database/              # Database utilities
-├── prisma/                # Prisma ORM configuration
-│   ├── migrations/        # Database migrations
-│   ├── schema.prisma      # Database schema
-│   └── seed.ts            # Seed data for development
-└── public/                # Static assets
+├── app/                      # Next.js App Router structure
+│   ├── api/                  # API routes
+│   │   ├── auth/             # Authentication endpoints
+│   │   │   └── me/           # Current user info
+│   │   ├── events/           # Calendar events API endpoints
+│   │   ├── plants/           # Plant management endpoints
+│   │   ├── social/           # Social networking features
+│   │   │   ├── posts/        # Post management
+│   │   │   ├── comments/     # Comment operations
+│   │   │   └── feed/         # Social feed endpoints
+│   │   └── users/            # User management API endpoints
+│   ├── dashboard/            # Dashboard page
+│   ├── features/             # Feature-specific pages
+│   ├── homepage/             # Main application homepage
+│   ├── userprofile/          # User profile page
+│   └── utils/                # Utility functions
+│       └── auth.ts           # Authentication utilities
+├── components/               # Reusable React components
+├── lib/                      # Library code
+│   └── supabaseClient.ts     # Supabase client initialization
+├── prisma/                   # Prisma ORM configuration
+│   ├── migrations/           # Database structure migrations
+│   ├── schema.prisma         # Database schema
+│   └── seed.ts               # Seed data for development
+├── supabase/                 # Supabase configuration
+│   └── migrations/           # Security policy migrations
+├── public/                   # Static assets
+└── .env                      # Environment variables (not in repo)
 ```
+
+## Database Architecture
+
+Our application uses a dual-system approach for database management, leveraging the strengths of both Prisma and Supabase:
+
+### Prisma Responsibilities
+
+- **Schema Definition**: The schema.prisma file defines our data models, relationships, and database structure
+- **Database Migrations**: Manages structural changes to the database (adding/removing tables, columns, relationships)
+- **ORM Functionality**: Provides type-safe database queries and data manipulation in our API routes
+- **Data Seeding**: The seed.ts script populates the database with initial test data
+- **Type Generation**: Creates TypeScript types based on our database schema
+
+### Supabase Responsibilities
+
+- **Authentication**: Manages user signup, login, password reset, and session management
+- **Row Level Security (RLS)**: Enforces security policies at the database level, ensuring users can only access their own data
+- **Policy Management**: SQL policies that control read/write access to database tables
+- **Security Migrations**: Tracked in migrations to version control security changes
+
+This separation of concerns allows us to use the right tool for each job:
+- Prisma for data modeling and database interactions
+- Supabase for authentication and security
+
+When making changes to the application:
+1. Use Prisma migrations for schema/structural changes
+2. Use Supabase migrations for security policies
+
 
 ## Getting Started
 
@@ -95,6 +129,7 @@ plant-care-assistant/
 
 - Node.js 18.0 or later
 - npm or yarn package manager
+- Supabase account
 
 ### Installation
 
@@ -107,25 +142,43 @@ plant-care-assistant/
 2. Install dependencies:
    ```bash
    npm install
-   # or
-   yarn install
    ```
 
-3. Set up the database:
+3. Set up environment variables:
    ```bash
-   npx prisma migrate dev
+   # Create .env file with the following variables
+   DATABASE_URL="postgresql://postgres.YOUR_PROJECT_REF:YOUR_PASSWORD@aws-0-region.pooler.supabase.com:6543/postgres?pgbouncer=true"
+   DIRECT_URL="postgresql://postgres.YOUR_PROJECT_REF:YOUR_PASSWORD@aws-0-region.pooler.supabase.com:5432/postgres"
+   NEXT_PUBLIC_SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
+   NEXT_PUBLIC_SUPABASE_ANON_KEY="YOUR_ANON_KEY"
+   ```
+
+4. Set up the database:
+   ```bash
+   # Push Prisma schema to the database
+   npx prisma migrate dev --name init
+   
+   # Generate Prisma client
    npx prisma generate
+   
+   # Seed the database with initial data
    npx prisma db seed
    ```
 
-4. Start the development server:
+5. Apply Supabase security policies:
    ```bash
-   npm run dev
-   # or
-   yarn dev
+   # If using Supabase CLI
+   npx supabase migration new add_rls_policies
+   # Edit the created migration file to add RLS policies
+   npx supabase db push
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
+6. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+7. Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
 ## Development Roadmap
 

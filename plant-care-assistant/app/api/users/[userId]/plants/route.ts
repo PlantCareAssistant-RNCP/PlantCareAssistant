@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
-import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { getUserIdFromSupabase } from "@utils/auth";
 import { 
   validatePlant, 
   isValidationError, 
   validationErrorResponse 
-} from "@/utils/validation";
+} from "@utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -15,12 +15,12 @@ export async function GET(
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const currentUserId = await getUserIdFromSupabase(request);
+    if (!currentUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(request);
-    const targetUserId = parseInt(params.userId);
+    const targetUserId = params.userId;
 
     // Security: Users can only view their own plants
     if (currentUserId !== targetUserId) {
@@ -28,9 +28,9 @@ export async function GET(
     }
 
     // Check if user exists
-    const userExists = await prisma.user.findFirst({
+    const userExists = await prisma.userProfile.findFirst({
       where: { 
-        user_id: targetUserId,
+        id: targetUserId,
         deleted_at: null
       }
     });
@@ -79,12 +79,12 @@ export async function POST(
   { params }: { params: { userId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const currentUserId = await getUserIdFromSupabase(request);
+    if (!currentUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = getCurrentUserId(request);
-    const targetUserId = parseInt(params.userId);
+    const targetUserId = params.userId;
 
     // Security: Users can only create plants for themselves
     if (currentUserId !== targetUserId) {
@@ -92,9 +92,9 @@ export async function POST(
     }
 
     // Check if user exists
-    const userExists = await prisma.user.findFirst({
+    const userExists = await prisma.userProfile.findFirst({
       where: { 
-        user_id: targetUserId,
+        id: targetUserId,
         deleted_at: null
       }
     });
@@ -115,8 +115,12 @@ export async function POST(
     const newPlant = await prisma.plant.create({
       data: {
         plant_name: validationResult.plant_name,
-        user_id: targetUserId,
-        plant_type_id: validationResult.plant_type_id,
+        USER: {
+          connect: { id: targetUserId }
+        },
+        PLANT_TYPE: {
+          connect: { plant_type_id: validationResult.plant_type_id }
+        },
         photo: validationResult.photo || "default_plant.jpg",
         created_at: new Date(),
         updated_at: null,
@@ -127,8 +131,12 @@ export async function POST(
     // Also create the USER_PLANT relationship
     await prisma.userPlant.create({
       data: {
-        user_id: targetUserId,
-        plant_id: newPlant.plant_id
+        USER: {
+          connect: { id: targetUserId }
+        },
+        PLANT: {
+          connect: { plant_id: newPlant.plant_id }
+        }
       }
     });
 

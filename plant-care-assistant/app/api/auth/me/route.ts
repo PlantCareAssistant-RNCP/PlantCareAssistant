@@ -1,42 +1,65 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { getUserIdFromSupabase } from "@utils/auth";
+import { createClient } from "@supabase/supabase-js";
 
 const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
-    try {
-    if (!isAuthenticated(request)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    console.log("Auth/me endpoint called");
+    
+    // Get the user ID using our auth function
+    const userId = await getUserIdFromSupabase(request);
+    console.log("User ID from auth function:", userId);
+    
+    if (!userId) {
+      return NextResponse.json({ user: null }, { status: 401 });
     }
 
-        const userId = getCurrentUserId(request);
-
-        const user = await prisma.user.findFirst({
-            where: { 
-                user_id: userId,
-                deleted_at: null 
-            },
-            select: {
-                user_id: true,
-                username: true,
-                email: true,
-                created_at: true,
-                updated_at: true
-                // Don't include password_hash
-            }
-        });
-
-        if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
-        }
-
-        return NextResponse.json(user, { status: 200 });
-    } catch (error: unknown) {
-        console.error(error);
-        return NextResponse.json(
-            { error: "Failed to fetch user information" },
-            { status: 500 }
-        );
+    // Get Supabase user details
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Get the token from the header
+    const authHeader = request.headers.get("authorization");
+    const token = authHeader?.split(" ")[1] || "";
+    
+    // Get user details from Supabase
+    const { data: { user: supabaseUser }, error: supabaseError } = 
+      await supabase.auth.getUser(token);
+      
+    if (supabaseError || !supabaseUser) {
+      console.error("Error getting Supabase user:", supabaseError);
+      return NextResponse.json({ user: null }, { status: 401 });
     }
+
+    // Get user from database
+    const dbUser = await prisma.userProfile.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        created_at: true,
+        // Add other fields you want to include
+      }
+    });
+
+    // Return combined user information
+    return NextResponse.json({
+      user: {
+        ...dbUser,
+        email: supabaseUser.email,
+        supabaseUserId: supabaseUser.id,
+        // Include other fields from Supabase if needed
+      }
+    });
+  } catch (error) {
+    console.error("Error in /api/auth/me:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch user information" },
+      { status: 500 }
+    );
+  }
 }

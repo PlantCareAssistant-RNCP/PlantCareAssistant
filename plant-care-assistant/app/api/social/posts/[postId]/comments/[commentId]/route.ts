@@ -1,26 +1,25 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { getUserIdFromSupabase } from "@utils/auth";
 import { 
   validateId, 
   validateComment, 
   isValidationError, 
   validationErrorResponse 
-} from "@/utils/validation";
+} from "@utils/validation";
 
 const prisma = new PrismaClient();
 
-// Get a single comment
 export async function GET(
   request: Request,
   { params }: { params: { postId: string; commentId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Validate IDs
     const commentIdResult = validateId(params.commentId);
     if (isValidationError(commentIdResult)) {
       return validationErrorResponse(commentIdResult);
@@ -35,7 +34,7 @@ export async function GET(
       include: {
         USER: {
           select: {
-            user_id: true,
+            id: true,
             username: true
           }
         }
@@ -56,19 +55,16 @@ export async function GET(
   }
 }
 
-// Update a comment
 export async function PUT(
   request: Request,
   { params }: { params: { postId: string; commentId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = getCurrentUserId(request);
     
-    // Validate commentId
     const commentIdResult = validateId(params.commentId);
     if (isValidationError(commentIdResult)) {
       return validationErrorResponse(commentIdResult);
@@ -77,7 +73,6 @@ export async function PUT(
     
     const body = await request.json();
 
-    // Validate comment data
     const validationResult = validateComment(body);
     if (isValidationError(validationResult)) {
       return validationErrorResponse(validationResult);
@@ -85,7 +80,6 @@ export async function PUT(
     
     const validComment = validationResult;
 
-    // Check if comment exists and belongs to user
     const existingComment = await prisma.comment.findFirst({
       where: {
         comment_id: commentId,
@@ -101,7 +95,6 @@ export async function PUT(
       );
     }
 
-    // Update the comment with validated data
     const updatedComment = await prisma.comment.update({
       where: { comment_id: commentId },
       data: {
@@ -121,26 +114,22 @@ export async function PUT(
   }
 }
 
-// Delete a comment (soft delete)
 export async function DELETE(
   request: Request,
   { params }: { params: { postId: string; commentId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = getCurrentUserId(request);
     
-    // Validate commentId
     const commentIdResult = validateId(params.commentId);
     if (isValidationError(commentIdResult)) {
       return validationErrorResponse(commentIdResult);
     }
     const commentId = commentIdResult;
 
-    // Check if comment exists and belongs to user
     const existingComment = await prisma.comment.findFirst({
       where: {
         comment_id: commentId,
@@ -156,7 +145,6 @@ export async function DELETE(
       );
     }
 
-    // Soft delete the comment
     await prisma.comment.update({
       where: { comment_id: commentId },
       data: { deleted_at: new Date() }

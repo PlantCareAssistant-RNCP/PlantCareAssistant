@@ -3,32 +3,33 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:../database/my-database.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Comment {
-  comment_id Int       @id @default(autoincrement())
+  comment_id Int         @id @default(autoincrement())
   content    String
-  user_id    Int
+  user_id    String      @db.Uuid
   post_id    Int
   photo      String?
-  created_at DateTime  @default(now())
+  created_at DateTime    @default(now())
   updated_at DateTime?
   deleted_at DateTime?
-  POST       Post      @relation(fields: [post_id], references: [post_id], onDelete: Cascade, onUpdate: NoAction)
-  USER       User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  POST       Post        @relation(fields: [post_id], references: [post_id], onDelete: Cascade, onUpdate: NoAction)
+  USER       UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("COMMENT")
 }
 
 model Likes {
   post_id    Int
-  user_id    Int
-  created_at DateTime  @default(now())
+  user_id    String      @db.Uuid
+  created_at DateTime    @default(now())
   deleted_at DateTime?
-  USER       User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
-  POST       Post      @relation(fields: [post_id], references: [post_id], onDelete: Cascade, onUpdate: NoAction)
+  USER       UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  POST       Post        @relation(fields: [post_id], references: [post_id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([post_id, user_id])
   @@map("LIKES")
@@ -37,14 +38,14 @@ model Likes {
 model Plant {
   plant_id      Int         @id @default(autoincrement())
   plant_name    String
-  user_id       Int
+  user_id       String      @db.Uuid
   plant_type_id Int
   photo         String
   created_at    DateTime    @default(now())
   updated_at    DateTime?
   deleted_at    DateTime?
   PLANT_TYPE    PlantType   @relation(fields: [plant_type_id], references: [plant_type_id], onDelete: Cascade, onUpdate: NoAction)
-  USER          User        @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  USER          UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
   POST          Post[]
   USER_PLANT    UserPlant[]
   Event         Event[]
@@ -68,7 +69,7 @@ model Post {
   title      String
   content    String
   photo      String?
-  user_id    Int
+  user_id    String      @db.Uuid
   plant_id   Int
   created_at DateTime    @default(now())
   updated_at DateTime?
@@ -76,62 +77,62 @@ model Post {
   COMMENT    Comment[]
   LIKES      Likes[]
   PLANT      Plant       @relation(fields: [plant_id], references: [plant_id], onDelete: Cascade, onUpdate: NoAction)
-  USER       User        @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  USER       UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
   USERS_POST UsersPost[]
 
   @@map("POST")
 }
 
-model User {
-  user_id       Int         @id @default(autoincrement())
-  username      String      @unique(map: "sqlite_autoindex_USER_1")
-  email         String      @unique(map: "sqlite_autoindex_USER_2")
-  password_hash String
-  created_at    DateTime    @default(now())
-  updated_at    DateTime?
-  deleted_at    DateTime?
-  COMMENT       Comment[]
-  LIKES         Likes[]
-  PLANT         Plant[]
-  POST          Post[]
-  USERS_POST    UsersPost[]
-  USER_PLANT    UserPlant[]
-  Event         Event[]
+model UserProfile {
+  id         String    @id @default(uuid()) @db.Uuid
+  username   String    @unique
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+  deleted_at DateTime?
+  isAdmin    Boolean   @default(false)
 
-  @@map("USER")
+  COMMENT    Comment[]
+  LIKES      Likes[]
+  PLANT      Plant[]
+  POST       Post[]
+  USERS_POST UsersPost[]
+  USER_PLANT UserPlant[]
+  Event      Event[]
+
+  @@map("USER_PROFILE")
 }
 
 model UsersPost {
-  user_id Int
+  user_id String      @db.Uuid
   post_id Int
-  POST    Post @relation(fields: [post_id], references: [post_id], onDelete: Cascade, onUpdate: NoAction)
-  USER    User @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  POST    Post        @relation(fields: [post_id], references: [post_id], onDelete: Cascade, onUpdate: NoAction)
+  USER    UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@id([user_id, post_id])
   @@map("USERS_POST")
 }
 
 model UserPlant {
-  user_id  Int
+  user_id  String      @db.Uuid
   plant_id Int
-  PLANT    Plant @relation(fields: [plant_id], references: [plant_id], onDelete: Cascade, onUpdate: NoAction)
-  USER     User  @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  PLANT    Plant       @relation(fields: [plant_id], references: [plant_id], onDelete: Cascade, onUpdate: NoAction)
+  USER     UserProfile @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@id([user_id, plant_id])
   @@map("USER_PLANT")
 }
 
 model Event {
-  id        Int      @id @default(autoincrement())
+  id        Int         @id @default(autoincrement())
   title     String
   start     DateTime
-  end       DateTime
-  user      User     @relation(fields: [userId], references: [user_id])
-  userId    Int
-  plant     Plant?   @relation(fields: [plantId], references: [plant_id])
+  end       DateTime?
+  user      UserProfile @relation(fields: [userId], references: [id])
+  userId    String      @db.Uuid
+  plant     Plant?      @relation(fields: [plantId], references: [plant_id])
   plantId   Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   @@map("EVENT")
 }

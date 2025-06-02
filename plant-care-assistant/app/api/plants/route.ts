@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getCurrentUserId, isAuthenticated } from "@/utils/auth";
-import { validatePlant, isValidationError, validationErrorResponse } from "@/utils/validation";
+import { getUserIdFromSupabase } from "@utils/auth";
+import {
+  validatePlant,
+  isValidationError,
+  validationErrorResponse,
+} from "@utils/validation";
 
 const prisma = new PrismaClient();
 
 // List all plants for the current user
 export async function GET(request: Request) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = getCurrentUserId(request);
 
     const plants = await prisma.plant.findMany({
       where: { user_id: userId, deleted_at: null },
@@ -32,11 +35,11 @@ export async function GET(request: Request) {
 // Create a new plant
 export async function POST(request: Request) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(request);
     const body = await request.json();
 
     // Validate plant data
@@ -51,20 +54,28 @@ export async function POST(request: Request) {
     const newPlant = await prisma.plant.create({
       data: {
         plant_name: validPlant.plant_name,
-        user_id: userId,
-        plant_type_id: validPlant.plant_type_id,
         photo: validPlant.photo || "default_plant.jpg",
         created_at: new Date(),
         updated_at: null,
         deleted_at: null,
+        USER: {
+          connect: { id: userId },
+        },
+        PLANT_TYPE: {
+          connect: { plant_type_id: validPlant.plant_type_id },
+        },
       },
     });
 
     await prisma.userPlant.create({
       data: {
-        user_id: userId,
-        plant_id: newPlant.plant_id
-      }
+        USER: {
+          connect: { id: userId },
+        },
+        PLANT: {
+          connect: { plant_id: newPlant.plant_id },
+        },
+      },
     });
 
     return NextResponse.json(newPlant, { status: 201 });

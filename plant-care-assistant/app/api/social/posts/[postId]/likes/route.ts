@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getCurrentUserId, isAuthenticated } from "@utils/auth";
-import { isValidationError, validationErrorResponse,validateId } from "@/utils/validation";
+import { getUserIdFromSupabase } from "@utils/auth";
+import {
+  isValidationError,
+  validationErrorResponse,
+  validateId,
+} from "@utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -11,11 +15,11 @@ export async function GET(
   { params }: { params: { postId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Validate postId
     const postIdResult = validateId(params.postId);
     if (isValidationError(postIdResult)) {
       return validationErrorResponse(postIdResult);
@@ -43,7 +47,7 @@ export async function GET(
       include: {
         USER: {
           select: {
-            user_id: true,
+            id: true,
             username: true,
           },
         },
@@ -52,7 +56,7 @@ export async function GET(
 
     return NextResponse.json(likes, { status: 200 });
   } catch (error: unknown) {
-    console.error(error);
+    console.error("Error fetching likes:", error);
     return NextResponse.json(
       { error: "Failed to fetch likes" },
       { status: 500 }
@@ -66,13 +70,11 @@ export async function POST(
   { params }: { params: { postId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(request);
-
-    // Validate postId
     const postIdResult = validateId(params.postId);
     if (isValidationError(postIdResult)) {
       return validationErrorResponse(postIdResult);
@@ -80,108 +82,89 @@ export async function POST(
     const postId = postIdResult;
 
     // Check if post exists
-    const post = await prisma.post.findFirst({
-      where: {
-        post_id: postId,
-        deleted_at: null,
-      },
+    const post = await prisma.post.findUnique({
+      where: { post_id: postId },
     });
 
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Check if like already exists (including soft-deleted)
-    const existingLike = await prisma.likes.findUnique({
+    // Check if already liked
+    const existingLike = await prisma.likes.findFirst({
       where: {
-        post_id_user_id: {
-          post_id: postId,
-          user_id: userId,
-        },
+        post_id: postId,
+        user_id: userId,
       },
     });
 
     if (existingLike) {
-      if (existingLike.deleted_at) {
-        // Restore the like if it was soft-deleted
-        await prisma.likes.update({
-          where: {
-            post_id_user_id: {
-              post_id: postId,
-              user_id: userId,
-            },
-          },
-          data: {
-            deleted_at: null,
-          },
-        });
-        return NextResponse.json({ message: "Post liked" }, { status: 200 });
-      }
-      return NextResponse.json({ message: "Already liked" }, { status: 200 });
+      return NextResponse.json(
+        { message: "Post already liked" },
+        { status: 200 }
+      );
     }
 
-    // Create a new like
     await prisma.likes.create({
       data: {
-        post_id: postId,
-        user_id: userId,
+        USER: {
+          connect: { id: userId },
+        },
+        POST: {
+          connect: { post_id: postId },
+        },
         created_at: new Date(),
       },
     });
 
-    return NextResponse.json({ message: "Post liked" }, { status: 201 });
+    return NextResponse.json(
+      { message: "Post liked successfully" },
+      { status: 201 }
+    );
   } catch (error: unknown) {
-    console.error(error);
-    return NextResponse.json({ error: "Failed to like post" }, { status: 500 });
+    console.error("Error liking post:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to like post",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
 }
 
-// Unlike a post (soft delete)
+// Unlike a post
 export async function DELETE(
   request: Request,
   { params }: { params: { postId: string } }
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(request);
-
-    // Validate postId
     const postIdResult = validateId(params.postId);
     if (isValidationError(postIdResult)) {
       return validationErrorResponse(postIdResult);
     }
     const postId = postIdResult;
 
-    // Check if like exists
-    const existingLike = await prisma.likes.findUnique({
-      where: {
-        post_id_user_id: {
-          post_id: postId,
-          user_id: userId,
-        },
-      },
+    const post = await prisma.post.findUnique({
+      where: { post_id: postId },
     });
 
-    if (!existingLike || existingLike.deleted_at) {
-      return NextResponse.json(
-        { message: "Not liked or already unliked" },
-        { status: 200 }
-      );
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Soft delete the like
-    await prisma.likes.update({
+    // Delete the like record
+    await prisma.likes.delete({
       where: {
         post_id_user_id: {
           post_id: postId,
           user_id: userId,
         },
-      },
-      data: {
-        deleted_at: new Date(),
       },
     });
 
@@ -190,9 +173,23 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error(error);
+    console.error("Error unliking post:", error);
+    // If the like doesn't exist, return a success anyway
+    if (
+      error instanceof Error &&
+      error.message.includes("Record to delete does not exist")
+    ) {
+      return NextResponse.json(
+        { message: "Post was not liked" },
+        { status: 200 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Failed to unlike post" },
+      {
+        error: "Failed to unlike post",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
