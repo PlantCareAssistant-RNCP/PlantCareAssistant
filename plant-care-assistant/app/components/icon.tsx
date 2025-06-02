@@ -10,6 +10,7 @@ import ArrowLeft from '@icons/arrow_left.svg';
 import ArrowLeftwhite from '@icons/arrow_left_white.svg';
 import Comment from '@icons/comment_icon.svg';
 import Commentwhite from '@icons/comment_icon_white.svg';
+import CommentBlack from '@icons/comment_icon_black.svg';
 import Feed from '@icons/feed_icon.svg';
 import Feedwhite from '@icons/feed_icon_white.svg';
 import Home from '@icons/home_icon.svg';
@@ -40,7 +41,8 @@ const icons = {
   homewhite: Homewhite,
   schedulewhite: Schedulewhite,
   searchwhite: Searchwhite,
-  dashboardwhite: Dashboardwhite
+  dashboardwhite: Dashboardwhite,
+  commentBlack: CommentBlack
 };
 
 type IconName = keyof typeof icons;
