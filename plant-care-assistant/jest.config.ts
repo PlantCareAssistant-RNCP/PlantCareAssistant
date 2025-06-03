@@ -18,12 +18,12 @@ const config: Config = {
   ],
   testMatch: ['**/__tests__/**/*.(spec|test).[jt]s?(x)'], // 👈 AJOUT ICI
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/app/$1',
     '^@components/(.*)$': '<rootDir>/components/$1',
     '^@features/(.*)$': '<rootDir>/app/features/$1',
     '^@utils/(.*)$': '<rootDir>/utils/$1',
     '^@api/(.*)$': '<rootDir>/app/api/$1',
     '^@icons/(.*)$': '<rootDir>/assets/icons/$1',
+    '^@/(.*)$': '<rootDir>/app/$1', // ← mettre à la fin
     '\\.(jpg|jpeg|png|gif|svg|css|scss)$': '<rootDir>/__mocks__/fileMock.js',
   },
   testPathIgnorePatterns: [
