@@ -120,6 +120,9 @@ export function validateDateRange(
   end: Date
 ): ValidationError | null {
   try {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    start.setHours(0, 0, 0, 0);
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return {
         error: "Invalid date format",
@@ -131,6 +134,10 @@ export function validateDateRange(
         error: "Start time must be earlier than end time",
         status: 400,
       };
+    }
+
+    if (start < now) {
+      return { error: "Start time cannot be before today", status: 400 };
     }
     return null;
   } catch (error) {
@@ -378,7 +385,7 @@ export function validateComment(
   if (typeof body.content !== "string") {
     return { error: "Comment content must be a string", status: 400 };
   }
-  
+
   return {
     content: body.content,
     photo: typeof body.photo === "string" ? body.photo : undefined,
@@ -387,26 +394,26 @@ export function validateComment(
 
 export function validateImage(file: File): ValidationError | File {
   const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
   if (!file) {
     return { error: "No file provided", status: 400 };
   }
-  
+
   if (!allowedTypes.includes(file.type)) {
-    return { 
-      error: "Only JPEG, PNG, WebP and GIF images are allowed", 
-      status: 400 
+    return {
+      error: "Only JPEG, PNG, WebP and GIF images are allowed",
+      status: 400,
     };
   }
-  
+
   if (file.size > maxSizeInBytes) {
-    return { 
-      error: "File size must be less than 5MB", 
-      status: 400 
+    return {
+      error: "File size must be less than 5MB",
+      status: 400,
     };
   }
-  
+
   return file;
 }
 
@@ -614,4 +621,3 @@ export function validatePartialPost(
 
   return result;
 }
-

@@ -33,3 +33,7 @@ jest.mock('@supabase/supabase-js', () => {
     })),
   };
 });
+
+// Mock Next.js
+global.Request = class {} as unknown as typeof Request;
+global.Response = class {} as unknown as typeof Response;
