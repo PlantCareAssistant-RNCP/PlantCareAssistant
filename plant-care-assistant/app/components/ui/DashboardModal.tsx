@@ -50,6 +50,12 @@ export default function DashboardModal({ isOpen, onClose, anchorRef }: Dashboard
         onClick={(e) => e.stopPropagation()}
       >
         <nav className="flex flex-col gap-4">
+        <Link href="/login" className="text-lg font-semibold text-gray-900 text-left">
+            Login
+          </Link>
+          <Link href="/register" className="text-lg font-semibold text-gray-900 text-left">
+            Register
+          </Link>          
           <Link href="/dashboard" className="text-lg font-semibold text-gray-900 text-left">
             Dashboard
           </Link>
