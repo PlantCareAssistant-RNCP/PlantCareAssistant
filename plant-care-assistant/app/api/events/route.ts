@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getUserIdFromSupabase } from "@utils/auth";
+import {
+  isValidationError,
+  validateEvent,
+  validationErrorResponse,
+} from "@utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -58,11 +63,9 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Validate required fields
-    if (!body.title || !body.start) {
-      return NextResponse.json(
-        { error: "Title and start date are required" },
-        { status: 400 }
-      );
+    const validationResult = validateEvent(body);
+    if (isValidationError(validationResult)) {
+      return validationErrorResponse(validationResult);
     }
 
     // Create event

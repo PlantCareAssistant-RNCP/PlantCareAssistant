@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getUserIdFromSupabase } from "@utils/auth";
+import {
+  validateId,
+  validateEvent,
+  isValidationError,
+  validationErrorResponse,
+  validatePartialEvent, // TODO: You'll need to create this
+} from "@utils/validation";
 
 const prisma = new PrismaClient();
 
@@ -14,7 +21,12 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const id = parseInt(params.id);
+  // Validate ID parameter
+  const idResult = validateId(params.id);
+  if (isValidationError(idResult)) {
+    return validationErrorResponse(idResult);
+  }
+  const id = idResult;
 
   const event = await prisma.event.findUnique({
     where: { id },
@@ -50,6 +62,10 @@ export async function PUT(
   }
 
   const body = await request.json();
+  const validationResult = validateEvent(body);
+  if (isValidationError(validationResult)) {
+    return validationErrorResponse(validationResult);
+  }
 
   const updatedEvent = await prisma.event.update({
     where: { id },
@@ -74,7 +90,13 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const id = parseInt(params.id);
+  // Validate ID parameter
+  const idResult = validateId(params.id);
+  if (isValidationError(idResult)) {
+    return validationErrorResponse(idResult);
+  }
+  const id = idResult;
+
   const existingEvent = await prisma.event.findUnique({ where: { id } });
 
   if (!existingEvent) {

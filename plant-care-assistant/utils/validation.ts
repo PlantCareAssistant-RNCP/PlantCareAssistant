@@ -621,3 +621,85 @@ export function validatePartialPost(
 
   return result;
 }
+
+//Partial Event Validation for Updates where not all fields are required
+export function validatePartialEvent(
+  body: EventInput
+): ValidationError | Partial<ValidEvent> {
+  const result: Partial<ValidEvent> = {};
+
+  // Validate title if provided
+  if (body.title !== undefined) {
+    if (typeof body.title !== "string") {
+      return { error: "Title must be a string", status: 400 };
+    }
+
+    if (body.title.trim().length === 0) {
+      return { error: "Title cannot be empty", status: 400 };
+    }
+
+    result.title = body.title;
+  }
+
+  // Validate start date if provided
+  if (body.start !== undefined) {
+    try {
+      const startDate = new Date(String(body.start));
+      if (isNaN(startDate.getTime())) {
+        return { error: "Invalid start date format", status: 400 };
+      }
+      result.start = startDate;
+    } catch (error) {
+      console.error("Start date validation error:", error);
+      return { error: "Invalid start date format", status: 400 };
+    }
+  }
+
+  // Validate end date if provided
+  if (body.end !== undefined) {
+    try {
+      const endDate = new Date(String(body.end));
+      if (isNaN(endDate.getTime())) {
+        return { error: "Invalid end date format", status: 400 };
+      }
+      result.end = endDate;
+    } catch (error) {
+      console.error("End date validation error:", error);
+      return { error: "Invalid end date format", status: 400 };
+    }
+  }
+
+  // Validate date range if both dates are provided
+  if (result.start && result.end) {
+    const dateError = validateDateRange(result.start, result.end);
+    if (dateError) return dateError;
+  }
+
+  // Validate plantId if provided
+  if (body.plantId !== undefined) {
+    if (body.plantId === null) {
+      result.plantId = undefined;
+    } else {
+      let plantId: number;
+
+      if (typeof body.plantId === "number") {
+        plantId = body.plantId;
+      } else if (typeof body.plantId === "string") {
+        plantId = parseInt(body.plantId);
+        if (isNaN(plantId)) {
+          return { error: "Plant ID must be a valid number", status: 400 };
+        }
+      } else {
+        return { error: "Plant ID must be a number", status: 400 };
+      }
+
+      if (plantId <= 0) {
+        return { error: "Plant ID must be a positive number", status: 400 };
+      }
+
+      result.plantId = plantId;
+    }
+  }
+
+  return result;
+}
