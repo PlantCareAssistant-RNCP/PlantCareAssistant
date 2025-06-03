@@ -5,7 +5,9 @@ import {
   validatePost,
   isValidationError,
   validationErrorResponse,
+  validateImage,
 } from "@utils/validation";
+import { uploadPostImage } from "@utils/images";
 
 const prisma = new PrismaClient();
 
@@ -72,6 +74,12 @@ export async function GET(request: Request) {
   }
 }
 
+
+// TODO : Look into Transaction Handling
+// TODO : Look into Content-Type Verification
+// TODO : Look into Rate Limiting
+// 
+
 // Create a new post
 export async function POST(request: Request) {
   try {
@@ -80,10 +88,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const formData = await request.formData();
+    const title = formData.get("title") as string;
+    const content = formData.get("content") as string;
+    const plantId = parseInt(formData.get("plant_id") as string);
+    const imageFile = formData.get("image") as File | null;
 
-    const validationResult = validatePost(body);
+    const postData = {
+      title,
+      content,
+      plant_id: plantId,
+    };
 
+    const validationResult = validatePost(postData);
     if (isValidationError(validationResult)) {
       return validationErrorResponse(validationResult);
     }
@@ -106,12 +123,27 @@ export async function POST(request: Request) {
       );
     }
 
+    let photoUrl = null;
+    if (imageFile) {
+      const validationResult = validateImage(imageFile);
+      if (isValidationError(validationResult)) {
+        return validationErrorResponse(validationResult);
+      }
+      photoUrl = await uploadPostImage(imageFile, userId);
+      if (!photoUrl) {
+        return NextResponse.json(
+          { error: "Failed to upload image" },
+          { status: 500 }
+        );
+      }
+    }
+
     // Create the post
     const newPost = await prisma.post.create({
       data: {
         title: validPost.title,
         content: validPost.content,
-        photo: validPost.photo,
+        photo: photoUrl,
         USER: {
           connect: { id: userId },
         },

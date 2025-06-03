@@ -354,6 +354,12 @@ export function validatePost(body: PostInput): ValidationError | ValidPost {
     return { error: "Plant ID must be a number", status: 400 };
   }
 
+  if (body.photo !== undefined) {
+    if (body.photo !== null && typeof body.photo !== "string") {
+      return { error: "Photo must be a URL string or null", status: 400 };
+    }
+  }
+
   return {
     title: body.title,
     content: body.content,
@@ -372,11 +378,36 @@ export function validateComment(
   if (typeof body.content !== "string") {
     return { error: "Comment content must be a string", status: 400 };
   }
-
+  
   return {
     content: body.content,
     photo: typeof body.photo === "string" ? body.photo : undefined,
   };
+}
+
+export function validateImage(file: File): ValidationError | File {
+  const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+  if (!file) {
+    return { error: "No file provided", status: 400 };
+  }
+  
+  if (!allowedTypes.includes(file.type)) {
+    return { 
+      error: "Only JPEG, PNG, WebP and GIF images are allowed", 
+      status: 400 
+    };
+  }
+  
+  if (file.size > maxSizeInBytes) {
+    return { 
+      error: "File size must be less than 5MB", 
+      status: 400 
+    };
+  }
+  
+  return file;
 }
 
 // Helper to create error response
@@ -583,3 +614,4 @@ export function validatePartialPost(
 
   return result;
 }
+
