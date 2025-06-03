@@ -16,6 +16,7 @@ const config: Config = {
     '!**/*.d.ts',
     '!**/node_modules/**',
   ],
+  testMatch: ['**/__tests__/**/*.(spec|test).[jt]s?(x)'], // 👈 AJOUT ICI
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/app/$1',
     '^@components/(.*)$': '<rootDir>/components/$1',
@@ -35,5 +36,6 @@ const config: Config = {
   ],
   moduleDirectories: ['node_modules', '<rootDir>'],
 }
+
  
 export default createJestConfig(config)
