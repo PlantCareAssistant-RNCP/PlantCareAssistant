@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getUserIdFromSupabase } from "@utils/auth";
+import { uploadPostImage, deletePostImage } from "@utils/images";
 import {
   isValidationError,
+  validateImage,
   validationErrorResponse,
-  validatePartialPost,
 } from "@utils/validation";
 
 const prisma = new PrismaClient();
@@ -101,7 +102,22 @@ export async function PUT(
     }
 
     const postId = parseInt(params.postId);
-    const body = await request.json();
+
+    const formData = await request.formData();
+    const title = formData.get("title") as string | null;
+    const content = formData.get("content") as string | null;
+    const imageFile = formData.get("image") as File | null;
+    const removeImage = formData.get("removeImage") === "true";
+
+    const updateData: {
+      title?: string;
+      content?: string;
+      photo?: string | null;
+      updated_at?: Date;
+    } = {};
+
+    if (title) updateData.title = title;
+    if (content) updateData.content = content;
 
     // Check if post exists and belongs to user
     const existingPost = await prisma.post.findFirst({
@@ -119,24 +135,42 @@ export async function PUT(
       );
     }
 
-    const validationResult = validatePartialPost(body);
+    if (imageFile) {
+      const validationResult = validateImage(imageFile);
+      if (isValidationError(validationResult)) {
+        return validationErrorResponse(validationResult);
+      }
+      // Upload new image
+      const photoUrl = await uploadPostImage(imageFile, userId);
+      if (!photoUrl) {
+        return NextResponse.json(
+          { error: "Failed to upload image" },
+          { status: 500 }
+        );
+      }
 
-    // Check if validation failed
-    if (isValidationError(validationResult)) {
-      return validationErrorResponse(validationResult);
+      if (existingPost.photo) {
+        await deletePostImage(existingPost.photo);
+      }
+      updateData.photo = photoUrl;
+    } else if (removeImage) {
+      // Remove image if explicitly requested
+      if (existingPost.photo) {
+        await deletePostImage(existingPost.photo);
+      }
+      updateData.photo = null;
     }
 
-    if (Object.keys(validationResult).length === 0) {
+    // If no fields to update
+    if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
         { error: "No valid fields to update" },
         { status: 400 }
       );
     }
 
-    const updateData = {
-      ...validationResult,
-      updated_at: new Date(),
-    };
+    // Add updated timestamp
+    updateData.updated_at = new Date();
 
     // Update the post
     const updatedPost = await prisma.post.update({
@@ -181,6 +215,10 @@ export async function DELETE(
         { error: "Post not found or you don't have permission to delete it" },
         { status: 404 }
       );
+    }
+
+    if (existingPost.photo) {
+      await deletePostImage(existingPost.photo);
     }
 
     // Soft delete the post

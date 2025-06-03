@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
+    experimental: {
+    serverComponentsExternalPackages: ['sharp'],
+  },
+    api: {
+    bodyParser: {
+      sizeLimit: '7mb', // Adjust based on your max file size (5MB + buffer)
+    },
+    responseLimit: '9mb', // Slightly higher than bodyParser limit
+  },
 };
 
 module.exports = nextConfig;
