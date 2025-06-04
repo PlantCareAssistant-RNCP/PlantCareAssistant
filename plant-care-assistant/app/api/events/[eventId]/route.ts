@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 import { getUserIdFromSupabase } from "@utils/auth";
 import {
   validateId,
-  validateEvent,
   isValidationError,
   validationErrorResponse,
   validatePartialEvent, // TODO: You'll need to create this
@@ -50,7 +49,13 @@ export async function PUT(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const id = parseInt(params.id);
+  // Validate ID parameter
+  const idResult = validateId(params.id);
+  if (isValidationError(idResult)) {
+    return validationErrorResponse(idResult);
+  }
+  const id = idResult;
+
   const existingEvent = await prisma.event.findUnique({ where: { id } });
 
   if (!existingEvent) {
@@ -62,19 +67,17 @@ export async function PUT(
   }
 
   const body = await request.json();
-  const validationResult = validateEvent(body);
+  
+  // Use validatePartialEvent instead of validateEvent
+  const validationResult = validatePartialEvent(body);
   if (isValidationError(validationResult)) {
     return validationErrorResponse(validationResult);
   }
 
+  // The validated object now contains only the fields to update
   const updatedEvent = await prisma.event.update({
     where: { id },
-    data: {
-      title: body.title,
-      start: body.start ? new Date(body.start) : undefined,
-      end: body.end ? new Date(body.end) : undefined,
-      plantId: body.plantId !== undefined ? body.plantId : undefined,
-    },
+    data: validationResult, // Use the validated data directly
   });
 
   return NextResponse.json(updatedEvent, { status: 200 });
