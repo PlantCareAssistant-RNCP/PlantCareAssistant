@@ -21,7 +21,7 @@ export default function LoginForm() {
         <h2 className="text-white text-lg mb-2">Login form</h2>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="username" className="text-white font-semibold">Username</label>
+          <label htmlFor="username" id="loginUsername" className="text-white font-semibold">Username</label>
           <input
             id="username"
             type="text"
@@ -34,7 +34,7 @@ export default function LoginForm() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="password" className="text-white font-semibold">Password</label>
+          <label htmlFor="password" id="loginPassword" className="text-white font-semibold">Password</label>
           <input
             id="password"
             type="password"
@@ -47,7 +47,7 @@ export default function LoginForm() {
         </div>
       
         <div className="flex justify-end">
-          <button type="submit" className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit">
+          <button type="submit" id="signIn" className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit">
               Sign in
           </button>
         </div>
