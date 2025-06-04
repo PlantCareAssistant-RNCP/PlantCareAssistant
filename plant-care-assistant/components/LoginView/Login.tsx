@@ -1,42 +1,43 @@
 "use client";
 
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
+import { useAuth } from "../../providers/AuthProvider";
+import { useRouter } from "next/navigation";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn } = useAuth();
+  const router = useRouter();
 
-  const handleSubmit = (event:React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log("email", email);
-    console.log("password", password);
+    setError("");
+    setIsLoading(true);
+
+    try {
+      await signIn(email, password);
+      router.push("/dashboard"); // Redirect to dashboard after login
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(err instanceof Error ? err.message : "Failed to sign in");
+    } finally {
+      setIsLoading(false);
+    }
   };
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   try {
-  //     const res = await fetch("/api/auth/login", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ email, password }),
-  //     });
-
-  //     if (!res.ok) {
-  //       throw new Error("Failed to login");
-  //     }
-
-  //     const data = await res.json();
-  //     setMessage(data.message);
-  //   } catch (error) {
-  //     setMessage("An error occured. Please try again.");
-  //     console.error(error);
-  //   }
-  // };
 
   return (
     <div className="bg-darkest p-8 rounded-lg shadow-lg w-full h-full flex flex-col justify-center items-center">
       <h2 className="text-2xl font-bold text-plant mb-6 text-center">Login</h2>
+      
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+          {error}
+        </div>
+      )}
+      
       <form
         onSubmit={handleSubmit}
         className="flex flex-col gap-4 w-full max-w-md"
@@ -51,6 +52,7 @@ const Login = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-verdigris-light"
+            required
           />
         </div>
         <div className="flex flex-col">
@@ -63,13 +65,15 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-verdigris-light"
+            required
           />
         </div>
         <button
           type="submit"
+          disabled={isLoading}
           className="bg-verdigris-light text-plant py-2 px-4 rounded-md hover:bg-verdigris-dark transition duration-300"
         >
-          Submit
+          {isLoading ? "Signing in..." : "Login"}
         </button>
       </form>
     </div>

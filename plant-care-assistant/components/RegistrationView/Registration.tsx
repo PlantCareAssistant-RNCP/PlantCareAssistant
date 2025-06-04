@@ -1,42 +1,53 @@
+"use client";
+
 import React, { useState } from "react";
+import { useAuth } from "../../providers/AuthProvider";
+import { useRouter } from "next/navigation";
 
 const Registration: React.FC = () => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { signUp } = useAuth();
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     try {
-//       const response = await fetch("/api/register", {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify(formData),
-//       });
-
-//       if (response.ok) {
-//         alert("Registration successful!");
-//         setFormData({ username: "", email: "", password: "" });
-//       } else {
-//         alert("Registration failed. Please try again.");
-//       }
-//     } catch (error) {
-//       console.error("Error:", error);
-//       alert("An error occurred. Please try again.");
-//     }
-//   };
-const handleSubmit = (event:React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    console.log(formData)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    
+    // Validate password strength
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      await signUp(formData.email, formData.password, formData.username);
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Registration error:", err);
+      setError(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -44,6 +55,13 @@ const handleSubmit = (event:React.FormEvent<HTMLFormElement>) => {
       <h2 className="text-2xl font-bold text-plant mb-6 text-center">
         Register
       </h2>
+      
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+          {error}
+        </div>
+      )}
+      
       <form
         onSubmit={handleSubmit}
         className="flex flex-col gap-4 w-full max-w-md"
@@ -62,6 +80,7 @@ const handleSubmit = (event:React.FormEvent<HTMLFormElement>) => {
             className="p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-verdigris-light"
           />
         </div>
+        
         <div className="flex flex-col">
           <label htmlFor="email" className="text-plant mb-2">
             Email:
@@ -76,6 +95,7 @@ const handleSubmit = (event:React.FormEvent<HTMLFormElement>) => {
             className="p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-verdigris-light"
           />
         </div>
+        
         <div className="flex flex-col">
           <label htmlFor="password" className="text-plant mb-2">
             Password:
@@ -90,11 +110,28 @@ const handleSubmit = (event:React.FormEvent<HTMLFormElement>) => {
             className="p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-verdigris-light"
           />
         </div>
+        
+        <div className="flex flex-col">
+          <label htmlFor="confirmPassword" className="text-plant mb-2">
+            Confirm Password:
+          </label>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+            className="p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-verdigris-light"
+          />
+        </div>
+        
         <button
           type="submit"
+          disabled={isLoading}
           className="bg-verdigris-light text-plant py-2 px-4 rounded-md hover:bg-verdigris-dark transition duration-300"
         >
-          Register
+          {isLoading ? "Creating Account..." : "Register"}
         </button>
       </form>
     </div>
