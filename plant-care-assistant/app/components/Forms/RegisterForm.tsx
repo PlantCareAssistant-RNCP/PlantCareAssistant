@@ -3,6 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Logo from '@/components/logo';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function RegisterForm() {
   const [form, setForm] = useState({
@@ -11,16 +16,56 @@ export default function RegisterForm() {
     password: '',
     confirmPassword: '',
   });
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+
     if (form.password !== form.confirmPassword) {
-      alert('Passwords do not match!');
+      setError('Passwords do not match!');
       return;
+    }
+
+    try {
+      // Créer un utilisateur dans Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      // Ajouter le profil utilisateur dans votre base de données
+      const response = await fetch('/api/auth/create-user-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: data.user?.id, // ID utilisateur généré par Supabase
+          username: form.username,
+        }),
+      });
+
+      if (!response.ok) {
+        const responseError = await response.json();
+        setError(responseError.error || 'Failed to create user profile');
+        return;
+      }
+
+      setSuccessMessage('Account created successfully! Please check your email to confirm.');
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -91,6 +136,9 @@ export default function RegisterForm() {
               Register
           </button>
         </div>
+
+        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        {successMessage && <p className="text-green-500 text-sm mt-2">{successMessage}</p>}
 
         <p className="text-white text-sm mt-2 text-right">
           Already registered?{' '}

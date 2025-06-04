@@ -3,18 +3,54 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Logo from '@/components/logo';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
+    try {
+      // Rechercher l'utilisateur par son username
+      const { data: userData, error: userError } = await supabase
+        .from('user_profiles') // Remplacez par le nom de votre table contenant les profils utilisateurs
+        .select('email')
+        .eq('username', username)
+        .single();
+
+      if (userError || !userData) {
+        setError('Username not found.');
+        return;
+      }
+
+      // Authentifier l'utilisateur avec l'email récupéré
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: userData.email,
+        password,
+      });
+
+      if (authError) {
+        setError(authError.message);
+        return;
+      }
+
+      // Rediriger l'utilisateur après une connexion réussie
+      window.location.href = '/dashboard'; // Remplacez par la route souhaitée
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+    }
   };
 
   return (
     <div className="flex flex-col items-center min-h-screen px-4 py-8 space-y-6">
-      
       <Logo size={200} />
       
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-sm">
@@ -51,6 +87,8 @@ export default function LoginForm() {
               Sign in
           </button>
         </div>
+
+        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
         <p className="text-white text-sm mt-2 text-right">
           Not registered yet?{' '}
