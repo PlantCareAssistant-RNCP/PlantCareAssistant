@@ -15,7 +15,7 @@ export default function FeedCard({
   commentsCount,
 }: FeedCardProps) {
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden space-y-2 p-3">
+    <div className="bg-[#E8E8E8] text-black rounded-xl shadow-md overflow-hidden space-y-2 p-3">
       <div className="w-full h-48 rounded-md overflow-hidden relative">
         <Image
           src={imageUrl}

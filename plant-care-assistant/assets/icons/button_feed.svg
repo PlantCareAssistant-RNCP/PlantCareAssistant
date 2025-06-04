@@ -1,0 +1,16 @@
+<svg viewBox="0 0 71 69" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Feed">
+<g id="Avatar" clip-path="url(#clip0_92_708)">
+<ellipse id="Background" cx="35.5" cy="34.5" rx="35.5" ry="34.5" fill="#0B747F"/>
+</g>
+<path id="Vector 4" d="M21 16V54C21 55.1046 21.8954 56 23 56H49C50.1046 56 51 55.1046 51 54V16C51 14.8954 50.1046 14 49 14H23C21.8954 14 21 14.8954 21 16Z" stroke="white" stroke-width="3"/>
+<path id="Vector 5" d="M26 22H36" stroke="white" stroke-width="3"/>
+<path id="Vector 6" d="M26 29H42" stroke="white" stroke-width="3"/>
+<path id="Vector 7" d="M44 35H28C26.8954 35 26 35.8954 26 37V48C26 49.1046 26.8954 50 28 50H44C45.1046 50 46 49.1046 46 48V37C46 35.8954 45.1046 35 44 35Z" stroke="white" stroke-width="3"/>
+</g>
+<defs>
+<clipPath id="clip0_92_708">
+<rect width="71" height="69" fill="white"/>
+</clipPath>
+</defs>
+</svg>

@@ -1,91 +1,70 @@
 "use client";
-import React, { useState } from "react";
-import Image from "next/image";
-import Login from "../LoginView/Login";
-import Registration from "../RegistrationView/Registration";
 
-const Landing = () => {
-  const [isLoginModal, setIsLoginModal] = useState(false);
-  const [isRegistrationModal, setIsRegistrationModal] = useState(false);
+import Logo from "@/components/logo";
+import Link from "next/link";
+import Icon from "@/components/icon";
 
-  const openLoginModal = () => {
-    setIsLoginModal(true);
-  };
-
-  const closeLoginModal = () => {
-    setIsLoginModal(false);
-  };
-
-  const openRegistrationModal = () => {
-    setIsRegistrationModal(true);
-  };
-
-  const closeRegistrationModal = () => {
-    setIsRegistrationModal(false);
-  };
-
+export default function Homepage() {
   return (
-    <div
-      className="bg-cover bg-center h-screen flex justify-center items-center relative"
-      style={{ backgroundImage: "url('/landing_background.jpg')" }}
-    >
-      <div className="bg-black bg-opacity-50 w-full h-full flex justify-center items-center">
-        <div className="text-center text-white flex flex-col items-center">
-          <Image
-            src="/PlantCare_Logo.png"
-            alt="PlantCareAssistant Logo"
-            width={500}
-            height={500}
-            style={{ filter: "brightness(1.9) contrast(1.5)" }}
-          />
-          <h1 className="text-5xl mb-5 text-leaf">Plant Care Assistant</h1>
-          <div className="flex justify-around w-full mt-5">
-            {/* Placeholder for login/register components */}
-            <div
-              className="bg-white bg-opacity-20 p-5 rounded-lg w-[45%] cursor-pointer"
-              onClick={openLoginModal}
-            >
-              Login Component
-            </div>
-            <div
-              className="bg-white bg-opacity-20 p-5 rounded-lg w-[45%] cursor-pointer"
-              onClick={openRegistrationModal}
-            >
-              Register Component
-            </div>
-          </div>
-        </div>
-      </div>
-      {/*Modal for Login*/}
-      {isLoginModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-lg relative">
-            <button
-              className="absolute top-2 right-2 text-white"
-              onClick={closeLoginModal}
-            >
-              ✖
-            </button>
-            <Login />
-          </div>
-        </div>
-      )}
+    <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto px-4 py-6 pt-24 space-y-6">
 
-      {isRegistrationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-lg relative">
-            <button
-              className="absolute top-2 right-2 text-white"
-              onClick={closeRegistrationModal}
-            >
-              ✖
-            </button>
-            <Registration />
+      {/* Logo centré */}
+      <div className="flex justify-center">
+        <Logo size={250} />
+      </div>
+      {/* Welcome text */}
+      <div className="text-center space-y-1">
+        <h1 className="text-2xl font-extrabold text-white">WELCOME</h1>
+        <p className="text-white text-lg">On your Plant Care Assistant !</p>
+      </div>
+
+      {/* Buttons */}
+      <div className="flex flex-col gap-4 w-full">
+        {/* Identification - sans lien */}
+        <div className="bg-white rounded-xl p-4 flex items-center justify-between text-black">
+          <div>
+            <h2 className="font-sans font-bold text-lg text-black">Identification</h2>
+            <p className="text-sm text-gray-600">Learn about plants !</p>
           </div>
+          <Icon name="buttonIdentification" size={55} />
         </div>
-      )}
+
+        {/* Feed */}
+        <Link href="/feed">
+          <div className="bg-white rounded-xl p-4 flex items-center justify-between hover:shadow-md cursor-pointer text-black">
+            <div>
+              <h2 className="font-sans font-bold text-lg">Feed</h2>
+              <p className="text-sm text-gray-600">See all the posts</p>
+            </div>
+            <Icon name="buttonFeed" size={55} />
+          </div>
+        </Link>
+
+        {/* Calendar */}
+        <Link href="/calendar">
+          <div className="bg-white rounded-xl p-4 flex items-center justify-between hover:shadow-md cursor-pointer text-black">
+            <div>
+              <h2 className="font-sans font-bold text-lg text-black">Your calendar</h2>
+              <p className="text-sm text-gray-600">Check your schedule</p>
+            </div>
+            <Icon name="buttonCalendar" size={55} />
+          </div>
+        </Link>
+      </div>
+
+      {/* Auth buttons */}
+      <div className="flex gap-4 mt-4">
+        <Link href="/login">
+          <button type="submit" className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit">
+              Login
+          </button>
+        </Link>
+        <Link href="/register">
+          <button type="submit" className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit">
+              Register
+          </button>
+        </Link>
+      </div>
     </div>
   );
-};
-
-export default Landing;
+}
