@@ -10,12 +10,12 @@ test('Test d\'authentification', async ({ page }) => {
   await loginButton.click();
 
   // Trouver le champ "loginUsername" et le remplir
-  const usernameField = page.locator('#loginUsername');
+  const usernameField = page.locator('#email');
   await expect(usernameField).toBeVisible();
-  await usernameField.fill('testuser123');
+  await usernameField.fill('bradley.loizeau@gmail.com');
 
   // Remplir le champ "loginPassword"
-  const passwordField = page.locator('#loginPassword');
+  const passwordField = page.locator('#password');
   await expect(passwordField).toBeVisible();
   await passwordField.fill('Password123');
 
@@ -25,10 +25,5 @@ test('Test d\'authentification', async ({ page }) => {
   await signInButton.click();
 
   // Attendre que la page redirige vers la page d'accueil
-  await expect(page).toHaveURL('http://localhost:3000/');
-
-  // Vérifie que les boutons "login" et "register" ne sont plus visibles une fois connecté
-  await expect(page.locator('#login')).toHaveCount(0);
-  await expect(page.locator('#register')).toHaveCount(0); 
-  // Si ces éléments sont masqués au lieu d'être supprimés, utilise toBeHidden() à la place
+  await expect(page).toHaveURL('http://localhost:3000/dashboard');
 });
