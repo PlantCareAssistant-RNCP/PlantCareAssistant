@@ -1,0 +1,149 @@
+-- CreateTable
+CREATE TABLE "COMMENT" (
+    "comment_id" SERIAL NOT NULL,
+    "content" TEXT NOT NULL,
+    "user_id" UUID NOT NULL,
+    "post_id" INTEGER NOT NULL,
+    "photo" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3),
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "COMMENT_pkey" PRIMARY KEY ("comment_id")
+);
+
+-- CreateTable
+CREATE TABLE "LIKES" (
+    "post_id" INTEGER NOT NULL,
+    "user_id" UUID NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "LIKES_pkey" PRIMARY KEY ("post_id","user_id")
+);
+
+-- CreateTable
+CREATE TABLE "PLANT" (
+    "plant_id" SERIAL NOT NULL,
+    "plant_name" TEXT NOT NULL,
+    "user_id" UUID NOT NULL,
+    "plant_type_id" INTEGER NOT NULL,
+    "photo" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3),
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "PLANT_pkey" PRIMARY KEY ("plant_id")
+);
+
+-- CreateTable
+CREATE TABLE "PLANT_TYPE" (
+    "plant_type_id" SERIAL NOT NULL,
+    "plant_type_name" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3),
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "PLANT_TYPE_pkey" PRIMARY KEY ("plant_type_id")
+);
+
+-- CreateTable
+CREATE TABLE "POST" (
+    "post_id" SERIAL NOT NULL,
+    "title" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "photo" TEXT,
+    "user_id" UUID NOT NULL,
+    "plant_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3),
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "POST_pkey" PRIMARY KEY ("post_id")
+);
+
+-- CreateTable
+CREATE TABLE "USER_PROFILE" (
+    "id" UUID NOT NULL,
+    "username" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3),
+    "deleted_at" TIMESTAMP(3),
+
+    CONSTRAINT "USER_PROFILE_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "USERS_POST" (
+    "user_id" UUID NOT NULL,
+    "post_id" INTEGER NOT NULL,
+
+    CONSTRAINT "USERS_POST_pkey" PRIMARY KEY ("user_id","post_id")
+);
+
+-- CreateTable
+CREATE TABLE "USER_PLANT" (
+    "user_id" UUID NOT NULL,
+    "plant_id" INTEGER NOT NULL,
+
+    CONSTRAINT "USER_PLANT_pkey" PRIMARY KEY ("user_id","plant_id")
+);
+
+-- CreateTable
+CREATE TABLE "EVENT" (
+    "id" SERIAL NOT NULL,
+    "title" TEXT NOT NULL,
+    "start" TIMESTAMP(3) NOT NULL,
+    "end" TIMESTAMP(3) NOT NULL,
+    "userId" UUID NOT NULL,
+    "plantId" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "EVENT_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "USER_PROFILE_username_key" ON "USER_PROFILE"("username");
+
+-- AddForeignKey
+ALTER TABLE "COMMENT" ADD CONSTRAINT "COMMENT_post_id_fkey" FOREIGN KEY ("post_id") REFERENCES "POST"("post_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "COMMENT" ADD CONSTRAINT "COMMENT_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "USER_PROFILE"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LIKES" ADD CONSTRAINT "LIKES_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "USER_PROFILE"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LIKES" ADD CONSTRAINT "LIKES_post_id_fkey" FOREIGN KEY ("post_id") REFERENCES "POST"("post_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "PLANT" ADD CONSTRAINT "PLANT_plant_type_id_fkey" FOREIGN KEY ("plant_type_id") REFERENCES "PLANT_TYPE"("plant_type_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "PLANT" ADD CONSTRAINT "PLANT_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "USER_PROFILE"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "POST" ADD CONSTRAINT "POST_plant_id_fkey" FOREIGN KEY ("plant_id") REFERENCES "PLANT"("plant_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "POST" ADD CONSTRAINT "POST_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "USER_PROFILE"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "USERS_POST" ADD CONSTRAINT "USERS_POST_post_id_fkey" FOREIGN KEY ("post_id") REFERENCES "POST"("post_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "USERS_POST" ADD CONSTRAINT "USERS_POST_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "USER_PROFILE"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "USER_PLANT" ADD CONSTRAINT "USER_PLANT_plant_id_fkey" FOREIGN KEY ("plant_id") REFERENCES "PLANT"("plant_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "USER_PLANT" ADD CONSTRAINT "USER_PLANT_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "USER_PROFILE"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "EVENT" ADD CONSTRAINT "EVENT_userId_fkey" FOREIGN KEY ("userId") REFERENCES "USER_PROFILE"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "EVENT" ADD CONSTRAINT "EVENT_plantId_fkey" FOREIGN KEY ("plantId") REFERENCES "PLANT"("plant_id") ON DELETE SET NULL ON UPDATE CASCADE;

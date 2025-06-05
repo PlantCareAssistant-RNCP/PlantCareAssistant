@@ -1,0 +1,18 @@
+<svg viewBox="0 0 71 69" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Calendar">
+<g id="Avatar" clip-path="url(#clip0_98_120)">
+<ellipse id="Background" cx="35.5" cy="34.5" rx="35.5" ry="34.5" fill="#0B747F"/>
+</g>
+<path id="Ellipse 5" d="M50.5 36.5C55.9076 36.5 60.5 41.3047 60.5 47.5C60.5 53.6953 55.9076 58.5 50.5 58.5C45.0924 58.5 40.5 53.6953 40.5 47.5C40.5 41.3047 45.0924 36.5 50.5 36.5Z" stroke="white" stroke-width="3"/>
+<path id="Vector 12" d="M55 37.2V18C55 16.8954 54.1046 16 53 16H16C14.8954 16 14 16.8954 14 18V50C14 51.1046 14.8954 52 16 52H40.2544" stroke="white" stroke-width="3"/>
+<path id="Vector 13" d="M14.3264 28.6L55.4545 28.2" stroke="white" stroke-width="3"/>
+<path id="Vector 14" d="M25 12V22" stroke="white" stroke-width="3"/>
+<path id="Vector 15" d="M44 12V22" stroke="white" stroke-width="3"/>
+<path id="Vector 16" d="M50 42V47C50 48.1046 50.8954 49 52 49H56" stroke="white" stroke-width="3"/>
+</g>
+<defs>
+<clipPath id="clip0_98_120">
+<rect width="71" height="69" fill="white"/>
+</clipPath>
+</defs>
+</svg>

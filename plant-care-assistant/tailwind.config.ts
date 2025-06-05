@@ -19,6 +19,9 @@ export default {
         // Vibrant greens/teals are better suited as accents or theme colors rather than primary.
         // Naming colors based on their use (e.g., "leaf", "teal", "navy") makes your code more readable.
       },
+      fontFamily: {
+        sans: ["Montserrat", "ui-sans-serif", "system-ui"],
+      },
     },
   },
   plugins: [],
