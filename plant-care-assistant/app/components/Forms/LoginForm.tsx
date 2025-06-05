@@ -95,6 +95,7 @@ export default function LoginForm() {
         <div className="flex justify-end">
           <button
             type="submit"
+            id="signIn"
             className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit disabled:opacity-50"
             disabled={isLoading}
           >

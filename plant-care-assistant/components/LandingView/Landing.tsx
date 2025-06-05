@@ -6,7 +6,7 @@ import Icon from "@/components/icon";
 
 export default function Homepage() {
   return (
-    <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto px-4 py-6 pt-24 space-y-6">
+    <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto px-4 py-6 pt-24 pb-28 space-y-6">
 
       {/* Logo centré */}
       <div className="flex justify-center">
@@ -55,12 +55,12 @@ export default function Homepage() {
       {/* Auth buttons */}
       <div className="flex gap-4 mt-4">
         <Link href="/login">
-          <button type="submit" className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit">
+          <button type="submit" id="login" data-testid="loginButtonTest" className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit z-50">
               Login
           </button>
         </Link>
         <Link href="/register">
-          <button type="submit" className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit">
+          <button type="submit" id="register" className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit z-50">
               Register
           </button>
         </Link>
