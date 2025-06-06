@@ -23,25 +23,34 @@ Plant Care Assistant is a Next.js application designed to help users manage thei
 
 - **Database Structure**
   - Complete schema design for users, plants, events, posts, comments, and likes
-  - SQLite database with Prisma ORM integration
-  - Initial data seeding for testing
+  - PostgreSQL database with Prisma ORM and Supabase integration
+  - Data seeding for development and testing
+
+- **Authentication System**
+  - Supabase authentication integration
+  - Protected routes and API endpoints
+  - User session management
+  - Security policies for data access control
 
 - **Calendar System**
-  - API endpoints for CRUD operations on events
-  - Temporary authentication utility functions
+  - Complete API endpoints for CRUD operations on events
   - Backend structure for managing plant care schedules
+  - Integration with user authentication
+
+- **User Management**
+  - User profile creation and editing
+  - API endpoints for user operations
+  - Data validation and error handling
 
 - **Basic UI Components**
-  - Landing page with login/registration modals
-  - User authentication forms (login/registration)
-  - Dashboard, user profile, and feed page skeletons
+  - Landing page with login/registration functionality
+  - User authentication forms
+  - Dashboard, user profile, and feed page implementations
 
-### In Progress
-
-- **User Authentication**
-  - API routes for login and registration (placeholder implementation)
-  - Frontend components for authentication
-  - Session management (not yet implemented)
+- **Social Features (Partial Implementation)**
+  - Post creation and management API endpoints
+  - Image upload functionality for posts
+  - Basic post interaction backend structure
 
 ## Technology Stack
 
@@ -60,6 +69,8 @@ Plant Care Assistant is a Next.js application designed to help users manage thei
 - **Development Tools**
   - [TypeScript](https://www.typescriptlang.org/docs/) - Static type-checking
   - [Luxon](https://moment.github.io/luxon/#/) - Date and time handling library
+  - [Playwright](https://playwright.dev/) - End-to-end testing framework
+  - [Multer](https://github.com/expressjs/multer) - Middleware for handling file uploads
 
 ## Project Structure
 
@@ -182,38 +193,27 @@ When making changes to the application:
 
 ## Development Roadmap
 
-### Short-term Goals
+### Current Priorities
+1. **Plant Management Enhancements**
+   - Complete plant profile pages with care history
+   - Add plant collection grouping and filtering
+   - Implement care instruction templates by plant type
 
-1. **Complete User Authentication System**
-   - Implement proper JWT or session-based authentication
-   - Add password hashing and security features
-   - Connect authentication to database
-   - Integrate with frontend components
-
-2. **Finish Calendar Feature**
-   - Complete calendar event CRUD operations
+2. **Calendar Feature Enhancements**
    - Implement recurring events
-   - Add notifications for upcoming care tasks
-   - Connect events to specific plants
+   - Add notification system for upcoming care tasks
+   - Improve UI/UX for calendar interactions
 
-3. **Plant Management**
-   - Create plant profile pages
-   - Implement plant CRUD operations
-   - Add care instructions for different plant types
+3. **Social Networking Frontend Implementation**
+   - Complete user interface for post creation and viewing
+   - Add frontend components for comments and likes
+   - Implement social feed with post filtering
 
 ### Medium-term Goals
-
-1. **Social Networking Features**
-   - Implement post creation and sharing
-   - Add comment and like functionality
-   - Create social feed with filtering options
-   - Add user following/followers system
-
-2. **Plant Identification**
-   - Integrate with plant identification API or ML model
-   - Allow users to upload photos for identification
-   - Save identification results to plant database
-   - Suggest care instructions based on identified plants
+1. **Advanced Social Networking Features**
+   - User following/followers system
+   - Enhanced social feed with algorithmic sorting
+   - Notification system for social interactions
 
 ### Long-term Goals
 
@@ -239,16 +239,24 @@ When making changes to the application:
 GET /api/events/:id
 ```
 
+#### Get all events for current user
+```
+GET /api/events Query: { startDate?: YYYY-MM-DD, endDate?: YYYY-MM-DD }
+```
+
+#### Get Events for a specific user
+```
+GET /api/users/:userId/events Query: { startDate?: YYYY-MM-DD, endDate?: YYYY-MM-DD }
+```
+
 #### Create a new event
 ```
-POST /api/events
-Body: { title, start, end, userId, plantId? }
+POST /api/events Content-Type: application/json Body: { title: string, start: ISO8601DateTime, end: ISO8601DateTime, plantId?: number, notes?: string, recurringPattern?: string }
 ```
 
 #### Update an event
 ```
-PUT /api/events/:id
-Body: { title?, start?, end?, plantId? }
+PUT /api/events/:id Content-Type: application/json Body: { title?: string, start?: ISO8601DateTime, end?: ISO8601DateTime, plantId?: number, notes?: string, recurringPattern?: string }
 ```
 
 #### Delete an event
@@ -256,28 +264,164 @@ Body: { title?, start?, end?, plantId? }
 DELETE /api/events/:id
 ```
 
-### User API (In Development)
+### Plants API
 
-#### Register a new user
+#### Get all plants for current user
 ```
-POST /api/users/auth/register
-Body: { email, password }
+GET /api/plants Query: { search?: string, sort?: "name"|"species"|"acquiredDate", filter?: string, page?: number, limit?: number }
+```
+
+#### Get a specific plant
+```
+GET /api/plants/:id
+```
+
+#### Create a new plant
+```
+POST /api/plants Content-Type: multipart/form-data FormData: { name: string, species: string, acquiredDate: YYYY-MM-DD, location?: string, notes?: string, image?: File }
+```
+
+#### Update a plant
+```
+PUT /api/plants/:id Content-Type: multipart/form-data FormData: { name?: string, species?: string, acquiredDate?: YYYY-MM-DD, location?: string, notes?: string, image?: File, removeImage?: boolean }
+```
+
+#### Delete a plant
+```
+DELETE /api/plants/:id
+```
+
+### Social API
+
+#### Posts
+
+##### Get all posts (with filtering)
+```
+GET /api/social/posts Query: { limit?: number, offset?: number, userId?: number, plantId?: number }
+```
+
+##### Get a specific post
+```
+GET /api/social/posts/:id
+```
+
+##### Create a new post
+```
+POST /api/social/posts Content-Type: multipart/form-data FormData: { title?: string, content: string, plant_id?: number, image?: File }
+```
+
+##### Update a post
+```
+PUT /api/social/posts/:id Content-Type: multipart/form-data FormData: { title?: string, content?: string, image?: File, removeImage?: boolean }
+```
+
+##### Delete a post
+```
+DELETE /api/social/posts/:id
+```
+
+#### Comments
+
+##### Get comments for a post
+```
+GET /api/social/posts/:postId/comments Query: { limit?: number, offset?: number }
+```
+
+##### Add a comment to a post
+```
+POST /api/social/posts/:postId/comments Content-Type: application/json Body: { content: string }
+```
+
+##### Update a comment
+```
+PUT /api/social/comments/:commentId Content-Type: application/json Body: { content: string }
+```
+
+##### Delete a comment
+```
+DELETE /api/social/comments/:commentId
+```
+
+#### Likes
+
+##### Like a post
+```
+POST /api/social/posts/:postId/likes
+```
+
+##### Unlike a post
+```
+DELETE /api/social/posts/:postId/likes
+```
+
+### User API
+
+#### Get current user profile
+```
+GET /api/users/me
+```
+
+
+#### Update user profile
+```
+PUT /api/users/me Content-Type: multipart/form-data FormData: { username?: string, bio?: string, avatar?: File, removeAvatar?: boolean }
+```
+
+#### Authentication
+Authentication is handled through Supabase Auth. The API routes below are part of the backend implementation, but most client applications should use the Supabase client SDK:
+
+##### Register a new user
+```
+POST /api/auth/register Body: { email: string, password: string, username?: string }
 ```
 
 #### Login
 ```
-POST /api/users/auth/login
-Body: { email, password }
+POST /api/auth/login Body: { email: string, password: string }
 ```
+
+#### Logout
+```
+POST /api/auth/logout
+```
+
+#### Client SDK Features
+
+The following operations are available through the Supabase client SDK:
+
+- Sign up with email/password
+- Sign in with email/password
+- Sign in with third-party providers (if configured)
+- Password reset
+- Email verification
+- Session management
+
+See [Supabase Auth documentation](https://supabase.com/docs/guides/auth) for implementation details.
+
+## Testing
+
+The project uses Playwright for end-to-end testing.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm run test
+
+# Run tests with UI mode
+npm run test:ui
+
+# Generate test reports
+npm run test:report
 
 ## Contributing
 
 We welcome contributions to the Plant Care Assistant project! Here's how you can help:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Create a feature branch (`git checkout -b feature-amazing-feature`)
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+4. Push to the branch (`git push origin feature-amazing-feature`)
 5. Open a Pull Request
 
 Please ensure your code follows the project's style guidelines and includes appropriate tests.
