@@ -22,12 +22,24 @@
     "paths": {
       "@/*": ["./app/*"],
       "@components/*": ["./components/*"],
+      "@components/ui/*": ["./components/ui/*"],
+      "@components/features/feed/*": ["./components/features/feed/*"],
+      "@components/forms/*": ["./components/forms/*"],
+      "@components/layout/*": ["./components/layout/*"],
+      "@components/features/calendar/*": ["components/features/calendar/*"],
+      "@components/common/*": ["./components/common/*"],
       "@features/*": ["./app/features/*"],
       "@utils/*": ["./utils/*"],
       "@api/*": ["./app/api/*"],
-      "@icons/*": ["assets/icons/*"],
+      "@icons/*": ["assets/icons/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "prisma/seed.mts"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "prisma/seed.mts"
+  ],
   "exclude": ["node_modules"]
 }

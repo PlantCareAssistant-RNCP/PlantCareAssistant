@@ -1,5 +1,5 @@
 import React from "react";
-import Landing from "../components/LandingView/Landing";
+import Landing from "./landing/page";
 
 function Home() {
   

@@ -1,7 +1,7 @@
 // components/layout/footer.tsx
-'use client'
+"use client";
 
-import Icon from '@/components/icon'
+import Icon from "@components/common/Icon";
 
 export default function Footer() {
   return (
@@ -12,5 +12,5 @@ export default function Footer() {
         </button>
       </div>
     </footer>
-  )
+  );
 }

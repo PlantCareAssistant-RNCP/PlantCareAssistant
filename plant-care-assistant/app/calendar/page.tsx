@@ -1,6 +1,5 @@
-
-'use client'
-import CalendarPage from "./components/CalendarPage";
+"use client";
+import CalendarPage from "../../components/features/calendar/Calendar";
 
 export default function Calendar() {
   return <CalendarPage />;
