@@ -31,7 +31,8 @@
       "@features/*": ["./app/features/*"],
       "@utils/*": ["./utils/*"],
       "@api/*": ["./app/api/*"],
-      "@icons/*": ["assets/icons/*"]
+      "@icons/*": ["assets/icons/*"],
+      "@tests/*": ["./tests/*"]
     }
   },
   "include": [
