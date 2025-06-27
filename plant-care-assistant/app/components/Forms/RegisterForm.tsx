@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Logo from "@components/common/Logo";
-import { useAuth } from "../../providers/AuthProvider";
+import Logo from "@/components/logo";
+import { useAuth } from "../../../providers/AuthProvider";
 import { useRouter } from "next/navigation";
 
 export default function RegisterForm() {

@@ -1,8 +1,8 @@
-import Image from "next/image";
-import Icon from "@components/common/Icon";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createServerSupabaseClient } from "../../lib/supabaseServer";
+import Image from 'next/image'
+import Icon from '@/components/icon'
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createServerSupabaseClient } from '../../lib/supabaseServer'
 
 export default async function DashboardPage() {
   // @TODO UNCOMMENT THIS CODE WHEN YOU WANT TO PROTECT THE DASHBOARD ROUTE WITH AUTHENTICATION
@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   const user = session.user
   */
 
-  const user = { email: "fakeuser@example.com" }; // Simulated user data for demonstration purposes
+  const user = { email: 'fakeuser@example.com' } // Simulated user data for demonstration purposes
 
   return (
     <div className="flex flex-col items-center px-4 pt-24 pb-6 bg-[#05131A] min-h-screen text-white">
@@ -68,5 +68,5 @@ export default async function DashboardPage() {
         </Link>
       </div>
     </div>
-  );
+  )
 }
