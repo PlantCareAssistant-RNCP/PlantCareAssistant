@@ -1,12 +1,26 @@
-name: CI Demo
+name: CI Tests
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  build:
+  test:
+    name: Run All Tests (Jest + Playwright)
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 23
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run all tests
+        run: npm test
