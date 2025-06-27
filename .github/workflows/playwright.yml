@@ -8,11 +8,6 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
-      DIRECT_URL: ${{ secrets.TEST_DIRECT_URL }}
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.TEST_SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -20,16 +15,23 @@ jobs:
         with:
           node-version: 23
 
-      - name: Debug environment variables
-        run: |
-          echo "NEXT_PUBLIC_SUPABASE_URL is set: ${{ secrets.TEST_SUPABASE_URL != '' }}"
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY is set: ${{ secrets.TEST_SUPABASE_ANON_KEY != '' }}"
-          echo "DATABASE_URL is set: ${{ secrets.TEST_DATABASE_URL != '' }}"
-          echo "DIRECT_URL is set: ${{ secrets.TEST_DIRECT_URL != '' }}"
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+
+      - name: Start Supabase local
+        working-directory: ./plant-care-assistant
+        run: supabase start
 
       - name: Install dependencies
         working-directory: ./plant-care-assistant
         run: npm ci
+
+      - name: Setup database
+        working-directory: ./plant-care-assistant
+        run: |
+          npx prisma generate
+          npx prisma db push
+          npx prisma db seed
 
       - name: Install Playwright Browsers
         working-directory: ./plant-care-assistant
@@ -38,6 +40,11 @@ jobs:
       - name: Run Playwright tests
         working-directory: ./plant-care-assistant
         run: npx playwright test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:54322/postgres
+          DIRECT_URL: postgresql://postgres:postgres@localhost:54322/postgres
+          NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
