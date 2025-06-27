@@ -8,12 +8,24 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.TEST_DIRECT_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.TEST_SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 23
+
+      - name: Debug environment variables
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL is set: ${{ secrets.TEST_SUPABASE_URL != '' }}"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY is set: ${{ secrets.TEST_SUPABASE_ANON_KEY != '' }}"
+          echo "DATABASE_URL is set: ${{ secrets.TEST_DATABASE_URL != '' }}"
+          echo "DIRECT_URL is set: ${{ secrets.TEST_DIRECT_URL != '' }}"
 
       - name: Install dependencies
         working-directory: ./plant-care-assistant
@@ -22,14 +34,6 @@ jobs:
       - name: Install Playwright Browsers
         working-directory: ./plant-care-assistant
         run: npx playwright install --with-deps
-
-      - name: Setup environment variables
-        working-directory: ./plant-care-assistant
-        run: |
-          echo "DATABASE_URL=${{ secrets.TEST_DATABASE_URL }}" >> .env
-          echo "DIRECT_URL=${{ secrets.TEST_DIRECT_URL }}" >> .env
-          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.TEST_SUPABASE_URL }}" >> .env
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.TEST_SUPABASE_ANON_KEY }}" >> .env
 
       - name: Run Playwright tests
         working-directory: ./plant-care-assistant
