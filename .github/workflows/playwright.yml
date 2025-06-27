@@ -1,27 +1,63 @@
 name: Playwright Tests
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:54322/postgres
+      DIRECT_URL: postgresql://postgres:postgres@localhost:54322/postgres
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 23
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+
+      - name: Start Supabase local
+        working-directory: ./plant-care-assistant
+        run: supabase start
+
+      - name: Install dependencies
+        working-directory: ./plant-care-assistant
+        run: npm ci
+
+      - name: Setup database
+        working-directory: ./plant-care-assistant
+        run: |
+          npx prisma generate
+          npx prisma db push
+          npx prisma db seed
+
+      - name: Create test user
+        working-directory: ./plant-care-assistant
+        run: |
+          # Create test user via Supabase Auth API
+          curl -X POST 'http://localhost:54321/auth/v1/signup' \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0" \
+            -H "Content-Type: application/json" \
+            -d '{"email": "bradley.loizeau@gmail.com", "password": "Password123", "email_confirm": true}' || echo "User might already exist"
+
+      - name: Install Playwright Browsers
+        working-directory: ./plant-care-assistant
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        working-directory: ./plant-care-assistant
+        run: npx playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: plant-care-assistant/playwright-report/
+          retention-days: 30
