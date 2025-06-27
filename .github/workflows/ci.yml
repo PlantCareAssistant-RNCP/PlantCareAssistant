@@ -16,11 +16,18 @@ jobs:
         with:
           node-version: 23
 
+      - name: Change to app directory
+        working-directory: ./plant-care-assistant
+        run: echo "Moved to project directory"
+
       - name: Install dependencies
+        working-directory: ./plant-care-assistant
         run: npm install
 
       - name: Install Playwright Browsers
+        working-directory: ./plant-care-assistant
         run: npx playwright install --with-deps
 
       - name: Run all tests
+        working-directory: ./plant-care-assistant
         run: npm test
