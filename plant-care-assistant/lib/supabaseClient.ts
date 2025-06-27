@@ -19,9 +19,6 @@ export const getSupabaseClient = () => {
   return _supabaseClient;
 };
 
-// For backward compatibility
-export const supabase = getSupabaseClient();
-
 // For client components
 export const createClient = () => {
   return createClientComponentClient();
