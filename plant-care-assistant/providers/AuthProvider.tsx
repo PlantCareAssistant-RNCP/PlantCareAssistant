@@ -34,17 +34,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  const [supabaseClient, setSupabaseClient] = useState<ReturnType<
+    typeof createClient
+  > | null>(null);
   const router = useRouter();
 
   useEffect(() => {
+    // Initialize Supabase client
+    try {
+      const client = createClient();
+      setSupabaseClient(client);
+    } catch (error) {
+      console.error("Failed to initialize Supabase client:", error);
+      setIsLoading(false);
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!supabaseClient) return;
+
     // Check active session when component mounts
     const getSession = async () => {
       try {
         setIsLoading(true);
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await supabaseClient.auth.getSession();
         setSession(session);
         setUser(session?.user ?? null);
       } catch (error) {
@@ -59,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Subscribe to auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabaseClient.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -69,10 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase, router]);
+  }, [supabaseClient, router]);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    if (!supabaseClient) {
+      throw new Error("Supabase client not initialized");
+    }
+    const { error } = await supabaseClient.auth.signInWithPassword({
       email,
       password,
     });
@@ -80,8 +99,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, username: string) => {
+    if (!supabaseClient) {
+      throw new Error("Supabase client not initialized");
+    }
+
     // 1. Create the auth user in Supabase
-    const { error, data } = await supabase.auth.signUp({ email, password });
+    const { error, data } = await supabaseClient.auth.signUp({
+      email,
+      password,
+    });
     if (error) throw error;
 
     // 2. Create the user profile in your database
@@ -104,18 +130,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         // If profile creation fails, try to clean up the auth user
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
         throw error;
       }
     }
   };
 
   const signOut = async () => {
+    if (!supabaseClient) {
+      throw new Error("Supabase client not initialized");
+    }
+
     // Call your API logout endpoint to handle server-side session cleanup
     await fetch("/api/auth/logout", { method: "POST" });
 
     // Then clear client-side session
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabaseClient.auth.signOut();
     if (error) throw error;
 
     // Redirect to landing page after logout
