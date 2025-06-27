@@ -21,33 +21,13 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],
-      "@app/*": ["./app/*"],
-      "@components/*": ["./components/*", "./app/components/*"],
-      "@components/ui/*": ["./components/ui/*"],
-      "@components/features/*": ["./components/features/*"],
-      "@components/forms/*": ["./components/forms/*"],
-      "@components/layout/*": ["./components/layout/*"],
-      "@components/common/*": ["./components/common/*"],
-      "@lib/*": ["./lib/*"],
+      "@components/*": ["./components/*"],
+      "@features/*": ["./app/features/*"],
       "@utils/*": ["./utils/*"],
-      "@providers/*": ["./providers/*"],
-      "@prisma/*": ["./prisma/*"],
       "@api/*": ["./app/api/*"],
-      "@icons/*": ["./assets/icons/*"],
-      "@assets/*": ["./assets/*"],
-      "@images/*": ["./public/images/*"],
-      "@public/*": ["./public/*"],
-      "@styles/*": ["./styles/*"],
-      "@tests/*": ["./tests/*"],
-      "@mocks/*": ["./tests/mocks/*", "./__mocks__/*"],
+      "@icons/*": ["assets/icons/*"],
     }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "prisma/seed.mts"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "prisma/seed.mts"],
   "exclude": ["node_modules"]
 }

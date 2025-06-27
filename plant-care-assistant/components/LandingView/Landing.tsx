@@ -1,12 +1,13 @@
 "use client";
 
-import Logo from "@components/common/Logo";
+import Logo from "@/components/logo";
 import Link from "next/link";
-import Icon from "@components/common/Icon";
+import Icon from "@/components/icon";
 
 export default function Homepage() {
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto px-4 py-6 pt-24 pb-28 space-y-6">
+
       {/* Logo centré */}
       <div className="flex justify-center">
         <Logo size={250} />
@@ -22,9 +23,7 @@ export default function Homepage() {
         {/* Identification - sans lien */}
         <div className="bg-white rounded-xl p-4 flex items-center justify-between text-black">
           <div>
-            <h2 className="font-sans font-bold text-lg text-black">
-              Identification
-            </h2>
+            <h2 className="font-sans font-bold text-lg text-black">Identification</h2>
             <p className="text-sm text-gray-600">Learn about plants !</p>
           </div>
           <Icon name="buttonIdentification" size={55} />
@@ -45,9 +44,7 @@ export default function Homepage() {
         <Link href="/calendar">
           <div className="bg-white rounded-xl p-4 flex items-center justify-between hover:shadow-md cursor-pointer text-black">
             <div>
-              <h2 className="font-sans font-bold text-lg text-black">
-                Your calendar
-              </h2>
+              <h2 className="font-sans font-bold text-lg text-black">Your calendar</h2>
               <p className="text-sm text-gray-600">Check your schedule</p>
             </div>
             <Icon name="buttonCalendar" size={55} />
@@ -58,22 +55,13 @@ export default function Homepage() {
       {/* Auth buttons */}
       <div className="flex gap-4 mt-4">
         <Link href="/login">
-          <button
-            type="submit"
-            id="login"
-            data-testid="loginButtonTest"
-            className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit z-50"
-          >
-            Login
+          <button type="submit" id="login" data-testid="loginButtonTest" className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit z-50">
+              Login
           </button>
         </Link>
         <Link href="/register">
-          <button
-            type="submit"
-            id="register"
-            className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit z-50"
-          >
-            Register
+          <button type="submit" id="register" className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit z-50">
+              Register
           </button>
         </Link>
       </div>

@@ -1,5 +1,5 @@
-import Image from "next/image";
-import Icon from "@components/common/Icon"
+import Image from 'next/image';
+import Icon from '../icon';
 
 interface FeedCardProps {
   username: string;
