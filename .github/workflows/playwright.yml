@@ -38,6 +38,15 @@ jobs:
           npx prisma db push
           npx prisma db seed
 
+      - name: Create test user
+        working-directory: ./plant-care-assistant
+        run: |
+          # Create test user via Supabase Auth API
+          curl -X POST 'http://localhost:54321/auth/v1/signup' \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0" \
+            -H "Content-Type: application/json" \
+            -d '{"email": "bradley.loizeau@gmail.com", "password": "Password123", "email_confirm": true}' || echo "User might already exist"
+
       - name: Install Playwright Browsers
         working-directory: ./plant-care-assistant
         run: npx playwright install --with-deps
