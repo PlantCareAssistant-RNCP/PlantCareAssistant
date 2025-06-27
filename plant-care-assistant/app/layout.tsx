@@ -1,8 +1,8 @@
 // app/layout.tsx
 import "./globals.css";
 import { ReactNode } from "react";
-import Header from "@/components/Layout/header";
-import Footer from "@/components/Layout/footer";
+import Header from "@components/layout/Header";
+import Footer from "@components/layout/Footer";
 import { AuthProvider } from "../providers/AuthProvider";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
