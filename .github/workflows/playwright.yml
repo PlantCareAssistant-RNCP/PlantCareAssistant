@@ -1,19 +1,9 @@
 name: Playwright Tests
 on:
   push:
-    branches: 
-      - dev
-      - main
-      - master
-      - 'feature/**'
-      - 'feature-*'
+    branches: [dev, main, master, 'feature/**', 'feature-*']
   pull_request:
-    branches: 
-      - dev
-      - main
-      - master
-      - 'feature/**'
-      - 'feature-*'
+    branches: [dev, main, master, 'feature/**', 'feature-*']
 jobs:
   test:
     runs-on: ubuntu-latest
