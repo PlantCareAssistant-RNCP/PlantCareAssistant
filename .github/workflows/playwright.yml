@@ -18,6 +18,17 @@ jobs:
         with:
           node-version: 23
 
+      - name: Install dependencies
+        working-directory: ./plant-care-assistant
+        run: npm ci
+
+      - name: Setup database
+        working-directory: ./plant-care-assistant
+        run: |
+          npx prisma generate
+          npx prisma db push
+          npx prisma db seed
+
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
 
@@ -30,17 +41,6 @@ jobs:
         run: |
           supabase status -o env | grep -E 'ANON_KEY|SERVICE_ROLE_KEY' >> $GITHUB_ENV
           echo "NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321" >> $GITHUB_ENV
-
-      - name: Install dependencies
-        working-directory: ./plant-care-assistant
-        run: npm ci
-
-      - name: Setup database
-        working-directory: ./plant-care-assistant
-        run: |
-          npx prisma generate
-          npx prisma db push
-          npx prisma db seed
 
       - name: Create test user
         working-directory: ./plant-care-assistant
