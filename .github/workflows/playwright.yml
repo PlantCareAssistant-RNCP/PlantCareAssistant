@@ -30,7 +30,7 @@ jobs:
 
     - name: Start Supabase local
       working-directory: ./plant-care-assistant
-      run: supabase start
+      run: supabase start --migrations=false
 
     # optional: wait until Postgres responds (robust against slow boots)
     - name: Wait for Postgres
