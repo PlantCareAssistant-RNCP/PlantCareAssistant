@@ -68,7 +68,7 @@ jobs:
 
       - name: Run Playwright tests
         working-directory: ./plant-care-assistant
-        run: npx playwright test
+        run: npm run test:e2e
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
