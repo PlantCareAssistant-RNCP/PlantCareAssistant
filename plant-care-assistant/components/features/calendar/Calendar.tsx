@@ -5,6 +5,7 @@ import { useAuth } from "../../../providers/AuthProvider";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/calendar.css";
 import CreateEventModal from "@components/ui/CreateEventModal";
+import EventDetailsModal from "@components/ui/EventDetailsModal";
 
 const defaultTZ = DateTime.local().zoneName;
 
@@ -26,6 +27,10 @@ const CalendarPage: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+    null
+  );
 
   // Function to fetch events from your API
   const fetchEvents = useCallback(async () => {
@@ -98,6 +103,15 @@ const CalendarPage: React.FC = () => {
     fetchEvents();
   }, [fetchEvents]);
 
+  const handleCloseDetailsModal = useCallback(() => {
+    setIsDetailsModalOpen(false);
+    setSelectedEvent(null);
+  }, []);
+
+  const handleEventDeleted = useCallback(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
   const { localizer, defaultDate, getNow } = useMemo(() => {
     Settings.defaultZone = timezone;
 
@@ -118,8 +132,8 @@ const CalendarPage: React.FC = () => {
       <Calendar
         selectable
         onSelectEvent={(event) => {
-          // TODO: Open event details modal
-          console.log("Selected event:", event);
+          setSelectedEvent(event);
+          setIsDetailsModalOpen(true);
         }}
         onSelectSlot={(slotInfo) => {
           setSelectedDate(slotInfo.start);
@@ -143,6 +157,14 @@ const CalendarPage: React.FC = () => {
           onClose={handleCloseModal}
           selectedDate={selectedDate}
           onEventCreated={handleEventCreated}
+        />
+      )}
+      {selectedEvent && (
+        <EventDetailsModal
+          isOpen={isDetailsModalOpen}
+          onClose={handleCloseDetailsModal}
+          selectedEvent={selectedEvent}
+          onEventDeleted={handleEventDeleted}
         />
       )}
     </div>
