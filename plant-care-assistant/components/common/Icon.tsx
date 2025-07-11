@@ -29,6 +29,7 @@ import ButtonCalendar from '@icons/button_calendar.svg';
 import ButtonFeed from '@icons/button_feed.svg';
 import ButtonIdentification from '@icons/button_identification.svg';
 import ButtonPlant from '@icons/button_plant.svg';
+import ButtonAddPost from '@icons/create_post_button.svg';
 
 const icons = {
   arrowLeft: ArrowLeft,
@@ -53,7 +54,8 @@ const icons = {
   buttonCalendar: ButtonCalendar,
   buttonFeed: ButtonFeed,
   buttonIdentification: ButtonIdentification,
-  buttonPlant: ButtonPlant
+  buttonPlant: ButtonPlant,
+  buttonAddPost: ButtonAddPost
 };
 
 type IconName = keyof typeof icons;
