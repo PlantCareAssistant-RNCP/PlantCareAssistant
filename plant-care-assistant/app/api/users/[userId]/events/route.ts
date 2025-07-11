@@ -1,20 +1,20 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getUserIdFromSupabase } from "@utils/auth";
-import { 
-  validateEvent, 
-  isValidationError, 
-  validationErrorResponse 
+import {
+  validateEvent,
+  isValidationError,
+  validationErrorResponse,
 } from "@utils/validation";
 
 const prisma = new PrismaClient();
 
 export async function GET(
   request: Request,
-    props: { params: Promise<{ userId: string }> } 
+  props: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const params = await props.params
+    const params = await props.params;
     const currentUserId = await getUserIdFromSupabase(request);
     if (!currentUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -81,10 +81,10 @@ export async function GET(
 
 export async function POST(
   request: Request,
-    props: { params: Promise<{ userId: string }> } 
+  props: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const params = await props.params
+    const params = await props.params;
     const currentUserId = await getUserIdFromSupabase(request);
     if (!currentUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -110,7 +110,7 @@ export async function POST(
     const body = await request.json();
 
     const validationResult = validateEvent(body);
-    
+
     if (isValidationError(validationResult)) {
       return validationErrorResponse(validationResult);
     }
@@ -137,12 +137,14 @@ export async function POST(
         title: validationResult.title,
         start: new Date(validationResult.start),
         end: validationResult.end ? new Date(validationResult.end) : null,
-        user: {
-          connect: { id: targetUserId }
+        USER: {
+          connect: { id: targetUserId },
         },
-        plant: validationResult.plantId ? {
-          connect: { plant_id: validationResult.plantId }
-        } : undefined
+        PLANT: validationResult.plantId
+          ? {
+              connect: { plant_id: validationResult.plantId },
+            }
+          : undefined,
       },
     });
 

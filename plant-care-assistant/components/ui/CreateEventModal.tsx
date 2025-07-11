@@ -106,7 +106,16 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         plantId: plantId === "" ? null : plantId,
       };
 
-      const response = await fetch("/api/events", {
+      // Add debug logging
+      console.log("Sending event data:", eventData);
+      console.log("Event data types:", {
+        title: typeof eventData.title,
+        start: typeof eventData.start,
+        end: typeof eventData.end,
+        plantId: typeof eventData.plantId,
+      });
+
+      const response = await fetch(`/api/users/${session.user?.id}/events`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -116,11 +125,21 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       });
 
       if (response.ok) {
-        onEventCreated(); // Refresh events in calendar
-        onClose(); // Close modal
+        onEventCreated();
+        onClose();
       } else {
         const errorData = await response.json();
-        setError(errorData.message || "Failed to create event");
+        console.error("=== API ERROR DETAILS ===");
+        console.error("Status:", response.status);
+        console.error("Status Text:", response.statusText);
+        console.error("Error Data:", errorData);
+        console.error(
+          "Response Headers:",
+          Object.fromEntries(response.headers.entries())
+        );
+        setError(
+          errorData.message || errorData.error || "Failed to create event"
+        );
       }
     } catch (err) {
       console.error("Error creating event:", err);
@@ -224,4 +243,4 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
   );
 };
 
-export default CreateEventModal
+export default CreateEventModal;
