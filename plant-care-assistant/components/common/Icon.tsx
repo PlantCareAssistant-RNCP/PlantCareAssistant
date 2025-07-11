@@ -1,5 +1,6 @@
 'use client';
 
+// eslint-disable-next-line
 import { FC, SVGProps } from 'react';
 import React from 'react';
 

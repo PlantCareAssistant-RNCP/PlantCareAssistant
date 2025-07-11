@@ -13,6 +13,11 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
+# Build-time environment variables (placeholders for successful build)
+ENV NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder-key
+ENV DATABASE_URL=postgresql://placeholder
+
 # Ensure Prisma Client is generated before building
 RUN npm run prisma:generate
 

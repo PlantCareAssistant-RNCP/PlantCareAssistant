@@ -7,15 +7,16 @@ const prisma = new PrismaClient();
 //Get a single Plant by ID
 export async function GET(
   request: Request,
-  context: { params: { plantId: string } }
+  props: { params: Promise<{ plantId: string }> } 
 ) {
   try {
+    const params = await props.params; 
     const userId = await getUserIdFromSupabase(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const plantId = parseInt(context.params.plantId);
+    const plantId = parseInt(params.plantId); 
 
     const plant = await prisma.plant.findFirst({
       where: {
@@ -46,14 +47,15 @@ export async function GET(
 // Update a plant
 export async function PUT(
   request: Request,
-  { params }: { params: { plantId: string } }
+  props: { params: Promise<{ plantId: string }> } 
 ) {
   try {
+    const params = await props.params; 
     const userId = await getUserIdFromSupabase(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const plantId = parseInt(params.plantId);
+    const plantId = parseInt(params.plantId); 
     const body = await request.json();
 
     // Check if plant exists and belongs to user
@@ -76,7 +78,7 @@ export async function PUT(
         plant_name: body.plant_name || existingPlant.plant_name,
         plant_type_id: body.plant_type_id || existingPlant.plant_type_id,
         photo: body.photo || existingPlant.photo,
-        updated_at: new Date(), // Update the updated_at timestamp
+        updated_at: new Date(),
       },
     });
 
@@ -93,14 +95,15 @@ export async function PUT(
 // Delete a plant (soft delete)
 export async function DELETE(
   request: Request,
-  { params }: { params: { plantId: string } }
+  props: { params: Promise<{ plantId: string }> } 
 ) {
   try {
+    const params = await props.params; 
     const userId = await getUserIdFromSupabase(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const plantId = parseInt(params.plantId);
+    const plantId = parseInt(params.plantId); 
 
     // Check if plant exists and belongs to user
     const existingPlant = await prisma.plant.findUnique({
@@ -122,7 +125,7 @@ export async function DELETE(
     });
 
     return NextResponse.json(
-      { message: "Plant deleted successfully",plant: deletedPlant },
+      { message: "Plant deleted successfully", plant: deletedPlant },
       { status: 200 }
     );
   } catch (error) {

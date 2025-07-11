@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getUserIdFromSupabase } from "@utils/auth";
 import {
@@ -12,16 +12,19 @@ const prisma = new PrismaClient();
 
 // Get a single event
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  props: { params: Promise<{ eventId: string }> }
 ) {
+
+  const params = await props.params;
+
   const userId = await getUserIdFromSupabase(request);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // Validate ID parameter
-  const idResult = validateId(params.id);
+  const idResult = validateId(params.eventId);
   if (isValidationError(idResult)) {
     return validationErrorResponse(idResult);
   }
@@ -41,16 +44,18 @@ export async function GET(
 
 // Update an event
 export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  props: { params: Promise<{ eventId: string }> }
 ) {
+
+  const params = await props.params
   const userId = await getUserIdFromSupabase(request);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // Validate ID parameter
-  const idResult = validateId(params.id);
+  const idResult = validateId(params.eventId);
   if (isValidationError(idResult)) {
     return validationErrorResponse(idResult);
   }
@@ -67,7 +72,7 @@ export async function PUT(
   }
 
   const body = await request.json();
-  
+
   // Use validatePartialEvent instead of validateEvent
   const validationResult = validatePartialEvent(body);
   if (isValidationError(validationResult)) {
@@ -85,16 +90,17 @@ export async function PUT(
 
 // Delete an event
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  props: { params: Promise<{ eventId: string }> }
 ) {
+  const params = await props.params
   const userId = await getUserIdFromSupabase(request);
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // Validate ID parameter
-  const idResult = validateId(params.id);
+  const idResult = validateId(params.eventId);
   if (isValidationError(idResult)) {
     return validationErrorResponse(idResult);
   }

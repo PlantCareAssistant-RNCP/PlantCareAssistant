@@ -6,5 +6,7 @@ services:
     volumes:
       - .:/app
       - ./database:/app/database
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development

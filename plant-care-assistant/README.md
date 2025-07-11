@@ -191,6 +191,43 @@ When making changes to the application:
 
 7. Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
+## Docker Setup
+
+If you prefer to use Docker or can't/won't install Node.js locally:
+
+### For Local Development
+
+1. Clone this repository
+
+2. Copy the environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Edit `.env` with your own Supabase credentials
+
+4. Run with Docker Compose:
+   ```bash
+   docker compose up
+   ```
+
+### For Production Deployment
+
+Provide environment variables through your deployment platform:
+
+```bash
+# Example for direct docker run
+docker run -p 3000:3000 \
+  -e NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co \
+  -e NEXT_PUBLIC_SUPABASE_ANON_KEY=your-key \
+  -e DATABASE_URL=your-database-url \
+  your-image-name
+```
+
+## Running the App
+
+After setup (either method), open [http://localhost:3000](http://localhost:3000) to see the application.
+
 ## Development Roadmap
 
 ### Current Priorities
