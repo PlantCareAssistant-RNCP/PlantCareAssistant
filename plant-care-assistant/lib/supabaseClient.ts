@@ -1,13 +1,25 @@
 import { createClient as supabaseCreateClient } from "@supabase/supabase-js";
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
-// For direct API access
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+let _supabaseClient: ReturnType<typeof supabaseCreateClient> | null = null;
 
-export const supabase = supabaseCreateClient(supabaseUrl, supabaseAnonKey);
+// Lazy initialization
+export const getSupabaseClient = () => {
+  if (!_supabaseClient) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// For client components 
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error("Missing Supabase environment variables");
+    }
+
+    _supabaseClient = supabaseCreateClient(supabaseUrl, supabaseAnonKey);
+  }
+
+  return _supabaseClient;
+};
+
+// For client components
 export const createClient = () => {
   return createClientComponentClient();
 };
