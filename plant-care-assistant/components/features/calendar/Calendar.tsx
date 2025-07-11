@@ -4,6 +4,7 @@ import { DateTime, Settings } from "luxon";
 import { useAuth } from "../../../providers/AuthProvider";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/calendar.css";
+import CreateEventModal from "@components/ui/CreateEventModal";
 
 const defaultTZ = DateTime.local().zoneName;
 
@@ -22,7 +23,9 @@ const CalendarPage: React.FC = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentDate, setCurrentDate] = useState(new Date())
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   // Function to fetch events from your API
   const fetchEvents = useCallback(async () => {
@@ -82,9 +85,18 @@ const CalendarPage: React.FC = () => {
     fetchEvents();
   }, [fetchEvents]);
 
-  const handleNavigate = useCallback((newDate: Date) =>{
-    setCurrentDate(newDate)
-  }, [])
+  const handleNavigate = useCallback((newDate: Date) => {
+    setCurrentDate(newDate);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setIsCreateModalOpen(false);
+    setSelectedDate(null);
+  }, []);
+
+  const handleEventCreated = useCallback(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   const { localizer, defaultDate, getNow } = useMemo(() => {
     Settings.defaultZone = timezone;
@@ -110,8 +122,8 @@ const CalendarPage: React.FC = () => {
           console.log("Selected event:", event);
         }}
         onSelectSlot={(slotInfo) => {
-          // TODO: Open create event modal
-          console.log("Selected slot:", slotInfo);
+          setSelectedDate(slotInfo.start);
+          setIsCreateModalOpen(true);
         }}
         onNavigate={handleNavigate}
         localizer={localizer}
@@ -125,6 +137,14 @@ const CalendarPage: React.FC = () => {
         endAccessor="end"
         style={{ height: 500 }}
       />
+      {selectedDate && (
+        <CreateEventModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCloseModal}
+          selectedDate={selectedDate}
+          onEventCreated={handleEventCreated}
+        />
+      )}
     </div>
   );
 };
