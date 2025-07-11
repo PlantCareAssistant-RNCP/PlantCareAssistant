@@ -13,9 +13,10 @@ const prisma = new PrismaClient();
 // Get a single post by ID
 export async function GET(
   request: Request,
-  { params }: { params: { postId: string } }
+  props: { params: Promise<{ postId: string }> } 
 ) {
   try {
+    const params = await props.params
     const userId = await getUserIdFromSupabase(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -93,9 +94,11 @@ export async function GET(
 // Update a post
 export async function PUT(
   request: Request,
-  { params }: { params: { postId: string } }
+    props: { params: Promise<{ postId: string }> } 
+
 ) {
   try {
+    const params = await props.params
     const userId = await getUserIdFromSupabase(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -191,9 +194,11 @@ export async function PUT(
 // Delete a post (soft delete)
 export async function DELETE(
   request: Request,
-  { params }: { params: { postId: string } }
+    props: { params: Promise<{ postId: string }> } 
+
 ) {
   try {
+    const params = await props.params
     const userId = await getUserIdFromSupabase(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

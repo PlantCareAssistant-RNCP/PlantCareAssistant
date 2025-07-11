@@ -1,20 +1,21 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getCurrentUserId, isAuthenticated } from "@utils/auth";
+import { getUserIdFromSupabase } from "@utils/auth"; // Use the function that actually exists
 
 const prisma = new PrismaClient();
 
 // Get all events for a specific plant
 export async function GET(
   request: Request,
-  { params }: { params: { plantId: string } }
+    props: { params: Promise<{ plantId: string }> } 
 ) {
   try {
-if (!isAuthenticated(request)) {  // or request in some files
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
+    const params = await props.params
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    const userId = getCurrentUserId(request);
     const plantId = parseInt(params.plantId);
 
     // First check if the plant exists and belongs to the user
@@ -50,14 +51,15 @@ if (!isAuthenticated(request)) {  // or request in some files
 // Create a new event for a specific plant
 export async function POST(
   request: Request,
-  { params }: { params: { plantId: string } }
+    props: { params: Promise<{ plantId: string }> } 
 ) {
   try {
-    if (!isAuthenticated(request)) {
+    const params = await props.params
+    const userId = await getUserIdFromSupabase(request);
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getCurrentUserId(request);
     const plantId = parseInt(params.plantId);
     const body = await request.json();
 

@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Icon from "@components/common/Icon";
 import Link from "next/link";
+// eslint-disable-next-line
 import { redirect } from "next/navigation";
+// eslint-disable-next-line
 import { createServerSupabaseClient } from "../../lib/supabaseServer";
 
 export default async function DashboardPage() {
@@ -20,6 +22,7 @@ export default async function DashboardPage() {
   const user = session.user
   */
 
+  // eslint-disable-next-line
   const user = { email: "fakeuser@example.com" }; // Simulated user data for demonstration purposes
 
   return (

@@ -12,9 +12,11 @@ const prisma = new PrismaClient();
 // Get all likes for a post
 export async function GET(
   request: Request,
-  { params }: { params: { postId: string } }
+    props: { params: Promise<{ postId: string }> } 
+
 ) {
   try {
+    const params = await props.params
     const userId = await getUserIdFromSupabase(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -67,9 +69,10 @@ export async function GET(
 // Like a post (create or restore a like)
 export async function POST(
   request: Request,
-  { params }: { params: { postId: string } }
+      props: { params: Promise<{ postId: string }> }  
 ) {
   try {
+    const params = await props.params
     const userId = await getUserIdFromSupabase(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -136,9 +139,10 @@ export async function POST(
 // Unlike a post
 export async function DELETE(
   request: Request,
-  { params }: { params: { postId: string } }
+    props: { params: Promise<{ postId: string }> } 
 ) {
   try {
+    const params = await props.params
     const userId = await getUserIdFromSupabase(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
