@@ -17,6 +17,14 @@ interface CalendarEvent {
   plantId?: number;
 }
 
+interface ApiEventResponse {
+  id: number;
+  title: string;
+  start: string;        
+  end: string | null;   
+  plant_id?: number;    
+}
+
 const CalendarPage: React.FC = () => {
   const { session } = useAuth();
   // eslint-disable-next-line
@@ -65,16 +73,21 @@ const CalendarPage: React.FC = () => {
 
       const data = await response.json();
 
-      // Transform the data to match react-big-calendar expectations
-      const transformedEvents: CalendarEvent[] = data.map(
-        (event: CalendarEvent & { start: string; end: string | null }) => ({
+      // Luxon approach with timezone awareness
+      const transformedEvents: CalendarEvent[] = data.map((event: ApiEventResponse) => {
+        const startDateTime = DateTime.fromISO(event.start);
+        const endDateTime = event.end
+          ? DateTime.fromISO(event.end)
+          : startDateTime;
+
+        return {
           id: event.id,
           title: event.title,
-          start: new Date(event.start),
-          end: event.end ? new Date(event.end) : new Date(event.start),
-          plantId: event.plantId,
-        })
-      );
+          start: startDateTime.toJSDate(),
+          end: endDateTime.toJSDate(),
+          plantId: event.plant_id,
+        };
+      });
 
       setEvents(transformedEvents);
     } catch (err) {

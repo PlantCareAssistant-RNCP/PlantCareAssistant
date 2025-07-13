@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../providers/AuthProvider";
+import { DateTime } from "luxon";
 
 interface CreateEventModalProps {
   isOpen: boolean;
@@ -99,10 +100,13 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       setIsSubmitting(true);
       setError(null);
 
+      const startDateTime = DateTime.fromJSDate(selectedDate);
+      const endDateTime = startDateTime.endOf("day");
+
       const eventData = {
         title: title.trim(),
-        start: selectedDate.toISOString(),
-        end: selectedDate.toISOString(), // Same day event
+        start: startDateTime.toISO(),
+        end: endDateTime.toISO(),
         plantId: plantId === "" ? null : plantId,
       };
 

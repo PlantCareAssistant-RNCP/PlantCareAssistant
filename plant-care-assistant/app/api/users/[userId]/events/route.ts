@@ -137,14 +137,8 @@ export async function POST(
         title: validationResult.title,
         start: new Date(validationResult.start),
         end: validationResult.end ? new Date(validationResult.end) : null,
-        USER: {
-          connect: { id: targetUserId },
-        },
-        PLANT: validationResult.plantId
-          ? {
-              connect: { plant_id: validationResult.plantId },
-            }
-          : undefined,
+        userId: targetUserId,
+        plantId: validationResult.plantId || null,
       },
     });
 

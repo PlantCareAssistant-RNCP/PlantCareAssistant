@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { DateTime } from "luxon";
 
 // Types for validation
 export type ValidationError = {
@@ -120,23 +121,30 @@ export function validateDateRange(
   end: Date
 ): ValidationError | null {
   try {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    start.setHours(0, 0, 0, 0);
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return {
+
+     const startDateTime = DateTime.fromJSDate(start);
+    const endDateTime = DateTime.fromJSDate(end);
+    const nowDateTime = DateTime.now();
+
+    if (!startDateTime.isValid || !endDateTime.isValid){
+      return{
         error: "Invalid date format",
         status: 400,
       };
     }
-    if (start >= end) {
+
+    const startDay = startDateTime.startOf('day');
+    const endDay = endDateTime.startOf('day');
+    const todayDay = nowDateTime.startOf('day');
+
+    if (startDay > endDay) {
       return {
         error: "Start time must be earlier than end time",
         status: 400,
       };
     }
 
-    if (start < now) {
+    if (startDay < todayDay) {
       return { error: "Start time cannot be before today", status: 400 };
     }
     return null;
