@@ -24,6 +24,8 @@ import Dashboard from '@icons/dashboard_icon.svg';
 import Dashboardwhite from '@icons/dashboard_icon_white.svg';
 import Photo from '@icons/photo_icon.svg';
 import Plant from '@icons/plant_icon.svg';
+import SendIcon from '@icons/send_icon.svg';
+import BackIcon from '@icons/back_icon.svg';
 
 import ButtonCalendar from '@icons/button_calendar.svg';
 import ButtonFeed from '@icons/button_feed.svg';
@@ -55,7 +57,9 @@ const icons = {
   buttonFeed: ButtonFeed,
   buttonIdentification: ButtonIdentification,
   buttonPlant: ButtonPlant,
-  buttonAddPost: ButtonAddPost
+  buttonAddPost: ButtonAddPost,
+  sendIcon: SendIcon,
+  backIcon: BackIcon,
 };
 
 type IconName = keyof typeof icons;
