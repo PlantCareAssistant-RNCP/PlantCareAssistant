@@ -10,6 +10,7 @@ import {
 import { Session, User } from "@supabase/supabase-js";
 import { createClient } from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import logger from "@utils/logger"
 
 type AuthContextType = {
   user: User | null;
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const client = createClient();
       setSupabaseClient(client);
     } catch (error) {
-      console.error("Failed to initialize Supabase client:", error);
+      logger.error("Failed to initialize Supabase client:", error);
       setIsLoading(false);
       return;
     }
@@ -64,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
       } catch (error) {
-        console.error("Error checking session:", error);
+        logger.error("Error checking session:", error);
       } finally {
         setIsLoading(false);
       }

@@ -6,17 +6,17 @@ import {
   validationErrorResponse,
   validateId,
 } from "@utils/validation";
+import logger from "@utils/logger";
 
 const prisma = new PrismaClient();
 
 // Get all likes for a post
 export async function GET(
   request: Request,
-    props: { params: Promise<{ postId: string }> } 
-
+  props: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const params = await props.params
+    const params = await props.params;
     const userId = await getUserIdFromSupabase(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -58,7 +58,7 @@ export async function GET(
 
     return NextResponse.json(likes, { status: 200 });
   } catch (error: unknown) {
-    console.error("Error fetching likes:", error);
+    logger.error("Error fetching likes:", error);
     return NextResponse.json(
       { error: "Failed to fetch likes" },
       { status: 500 }
@@ -69,10 +69,10 @@ export async function GET(
 // Like a post (create or restore a like)
 export async function POST(
   request: Request,
-      props: { params: Promise<{ postId: string }> }  
+  props: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const params = await props.params
+    const params = await props.params;
     const userId = await getUserIdFromSupabase(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -125,7 +125,7 @@ export async function POST(
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error("Error liking post:", error);
+    logger.error("Error liking post:", error);
     return NextResponse.json(
       {
         error: "Failed to like post",
@@ -139,10 +139,10 @@ export async function POST(
 // Unlike a post
 export async function DELETE(
   request: Request,
-    props: { params: Promise<{ postId: string }> } 
+  props: { params: Promise<{ postId: string }> }
 ) {
   try {
-    const params = await props.params
+    const params = await props.params;
     const userId = await getUserIdFromSupabase(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -177,7 +177,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Error unliking post:", error);
+    logger.error("Error unliking post:", error);
     // If the like doesn't exist, return a success anyway
     if (
       error instanceof Error &&

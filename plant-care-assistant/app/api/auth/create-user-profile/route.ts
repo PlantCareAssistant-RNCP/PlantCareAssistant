@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import logger from "@utils/logger"
 
 const prisma = new PrismaClient()
 
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Create UserProfile failed:', error)
+    logger.error('Create UserProfile failed:', error)
     return NextResponse.json({ error: 'UserProfile creation failed' }, { status: 500 })
   }
 }

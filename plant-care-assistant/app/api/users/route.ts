@@ -6,6 +6,7 @@ import {
   isValidationError,
   validationErrorResponse,
 } from "@utils/validation";
+import logger from "@utils/logger";
 
 const prisma = new PrismaClient();
 
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(users, { status: 200 });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to fetch users" },
       { status: 500 }
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to create user" },
       { status: 500 }

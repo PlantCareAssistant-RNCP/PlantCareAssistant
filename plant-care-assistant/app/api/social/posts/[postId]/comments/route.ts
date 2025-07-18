@@ -7,6 +7,7 @@ import {
   isValidationError,
   validationErrorResponse,
 } from "@utils/validation";
+import logger from "@utils/logger"
 
 const prisma = new PrismaClient();
 
@@ -61,7 +62,7 @@ export async function GET(
 
     return NextResponse.json(comments, { status: 200 });
   } catch (error: unknown) {
-    console.error("Error fetching comments:", error);
+    logger.error("Error fetching comments:", error);
     return NextResponse.json(
       { error: "Failed to fetch comments" },
       { status: 500 }
@@ -128,7 +129,7 @@ export async function POST(
 
     return NextResponse.json(newComment, { status: 201 });
   } catch (error: unknown) {
-    console.error("Error creating comment:", error);
+    logger.error("Error creating comment:", error);
     return NextResponse.json(
       { error: "Failed to create comment" },
       { status: 500 }

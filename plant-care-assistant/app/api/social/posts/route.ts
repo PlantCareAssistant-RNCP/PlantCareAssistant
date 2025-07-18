@@ -8,6 +8,7 @@ import {
   validateImage,
 } from "@utils/validation";
 import { uploadPostImage } from "@utils/images";
+import logger from "@utils/logger"
 
 const prisma = new PrismaClient();
 
@@ -66,7 +67,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(posts, { status: 200 });
   } catch (error: unknown) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to fetch posts" },
       { status: 500 }
@@ -169,7 +170,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newPost, { status: 201 });
   } catch (error: unknown) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to create post" },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getUserIdFromSupabase } from "@utils/auth";
+import logger from "@utils/logger"
 
 const prisma = new PrismaClient();
 
@@ -86,7 +87,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(enrichedPosts, { status: 200 });
   } catch (error: unknown) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to fetch feed" },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getUserIdFromSupabase } from "@utils/auth"; // Use the function that actually exists
+import { getUserIdFromSupabase } from "@utils/auth";
+import logger from "@utils/logger"
 
 const prisma = new PrismaClient();
 
@@ -43,7 +44,7 @@ export async function GET(
 
     return NextResponse.json(events, { status: 200 });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json({ error: "Failed to fetch plant events" }, { status: 500 });
   }
 }
@@ -97,7 +98,7 @@ export async function POST(
 
     return NextResponse.json(newEvent, { status: 201 });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json({ error: "Failed to create event" }, { status: 500 });
   }
 }

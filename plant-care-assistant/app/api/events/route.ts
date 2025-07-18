@@ -6,23 +6,24 @@ import {
   validateEvent,
   validationErrorResponse,
 } from "@utils/validation";
+import logger from "@utils/logger"
 
 const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
   try {
-    console.log("GET /api/events called");
+    logger.info("GET /api/events called");
 
     // Get authenticated user ID
     const userId = await getUserIdFromSupabase(request);
-    console.log("User ID:", userId);
+    logger.info("User ID:", userId);
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Log the user ID type for debugging
-    console.log("User ID type:", typeof userId);
+    logger.info("User ID type:", typeof userId);
 
     // Fetch events for the user
     const events = await prisma.event.findMany({
@@ -39,12 +40,12 @@ export async function GET(request: Request) {
       },
     });
 
-    console.log(`Found ${events.length} events for user`);
+    logger.info(`Found ${events.length} events for user`);
 
     // Return events (even if empty array)
     return NextResponse.json(events);
   } catch (error) {
-    console.error("Error fetching events:", error);
+    logger.error("Error fetching events:", error);
     return NextResponse.json(
       { error: "Failed to fetch events" },
       { status: 500 }
@@ -91,7 +92,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(event, { status: 201 });
   } catch (error) {
-    console.error("Error creating event:", error);
+    logger.error("Error creating event:", error);
     return NextResponse.json(
       {
         error: "Failed to create event",

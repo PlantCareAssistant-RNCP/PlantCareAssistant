@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { DateTime } from "luxon";
+import logger from "@utils/logger";
 
 // Types for validation
 export type ValidationError = {
@@ -121,21 +122,20 @@ export function validateDateRange(
   end: Date
 ): ValidationError | null {
   try {
-
-     const startDateTime = DateTime.fromJSDate(start);
+    const startDateTime = DateTime.fromJSDate(start);
     const endDateTime = DateTime.fromJSDate(end);
     const nowDateTime = DateTime.now();
 
-    if (!startDateTime.isValid || !endDateTime.isValid){
-      return{
+    if (!startDateTime.isValid || !endDateTime.isValid) {
+      return {
         error: "Invalid date format",
         status: 400,
       };
     }
 
-    const startDay = startDateTime.startOf('day');
-    const endDay = endDateTime.startOf('day');
-    const todayDay = nowDateTime.startOf('day');
+    const startDay = startDateTime.startOf("day");
+    const endDay = endDateTime.startOf("day");
+    const todayDay = nowDateTime.startOf("day");
 
     if (startDay > endDay) {
       return {
@@ -149,7 +149,7 @@ export function validateDateRange(
     }
     return null;
   } catch (error) {
-    console.error("Date range validation error:", error);
+    logger.error("Date range validation error:", error);
     return {
       error: "Invalid date format",
       status: 400,
@@ -209,8 +209,8 @@ export function validateEvent(body: EventInput): ValidationError | ValidEvent {
           : undefined,
     };
   } catch (error) {
-    console.error("Event validation error:", error);
-    console.error("Problematic input:", {
+    logger.error("Event validation error:", error);
+    logger.error("Problematic input:", {
       title: body.title,
       start: body.start,
       end: body.end,
@@ -658,7 +658,7 @@ export function validatePartialEvent(
       }
       result.start = startDate;
     } catch (error) {
-      console.error("Start date validation error:", error);
+      logger.error("Start date validation error:", error);
       return { error: "Invalid start date format", status: 400 };
     }
   }
@@ -672,7 +672,7 @@ export function validatePartialEvent(
       }
       result.end = endDate;
     } catch (error) {
-      console.error("End date validation error:", error);
+      logger.error("End date validation error:", error);
       return { error: "Invalid end date format", status: 400 };
     }
   }

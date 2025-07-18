@@ -7,6 +7,7 @@ import {
   isValidationError, 
   validationErrorResponse 
 } from "@utils/validation";
+import logger from "@utils/logger"
 
 const prisma = new PrismaClient();
 
@@ -48,7 +49,7 @@ export async function GET(
 
     return NextResponse.json(comment, { status: 200 });
   } catch (error: unknown) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to fetch comment" },
       { status: 500 }
@@ -108,7 +109,7 @@ export async function PUT(
 
     return NextResponse.json(updatedComment, { status: 200 });
   } catch (error: unknown) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to update comment" },
       { status: 500 }
@@ -158,7 +159,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to delete comment" },
       { status: 500 }

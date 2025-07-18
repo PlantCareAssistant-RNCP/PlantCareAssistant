@@ -2,16 +2,17 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getUserIdFromSupabase } from "@utils/auth";
 import { createClient } from "@supabase/supabase-js";
+import logger from "@utils/logger"
 
 const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
   try {
-    console.log("Auth/me endpoint called");
+    logger.info("Auth/me endpoint called");
     
     // Get the user ID using our auth function
     const userId = await getUserIdFromSupabase(request);
-    console.log("User ID from auth function:", userId);
+    logger.info("User ID from auth function:", userId);
     
     if (!userId) {
       return NextResponse.json({ user: null }, { status: 401 });
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
       await supabase.auth.getUser(token);
       
     if (supabaseError || !supabaseUser) {
-      console.error("Error getting Supabase user:", supabaseError);
+      logger.error("Error getting Supabase user:", supabaseError);
       return NextResponse.json({ user: null }, { status: 401 });
     }
 
@@ -56,7 +57,7 @@ export async function GET(request: Request) {
       }
     });
   } catch (error) {
-    console.error("Error in /api/auth/me:", error);
+    logger.error("Error in /api/auth/me:", error);
     return NextResponse.json(
       { error: "Failed to fetch user information" },
       { status: 500 }

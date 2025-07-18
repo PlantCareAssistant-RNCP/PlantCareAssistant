@@ -6,6 +6,7 @@ import {
   isValidationError,
   validatePartialUser,
 } from "@utils/validation";
+import logger from "@utils/logger"
 
 const prisma = new PrismaClient();
 
@@ -46,7 +47,7 @@ export async function GET(
 
     return NextResponse.json(user, { status: 200 });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to fetch user" },
       { status: 500 }
@@ -143,7 +144,7 @@ export async function PUT(
 
     return NextResponse.json(updatedUser, { status: 200 });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to update user" },
       { status: 500 }
@@ -193,7 +194,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to delete user" },
       { status: 500 }

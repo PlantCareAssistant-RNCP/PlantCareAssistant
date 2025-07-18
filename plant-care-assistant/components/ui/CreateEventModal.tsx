@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../providers/AuthProvider";
 import { DateTime } from "luxon";
+import logger from "@utils/logger"
 
 interface CreateEventModalProps {
   isOpen: boolean;
@@ -71,10 +72,10 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           const data = await response.json();
           setPlants(data);
         } else {
-          console.error("Failed to fetch plants");
+          logger.error("Failed to fetch plants");
         }
       } catch (err) {
-        console.error("Error fetching plants:", err);
+        logger.error("Error fetching plants:", err);
       } finally {
         setIsLoadingPlants(false);
       }
@@ -111,8 +112,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       };
 
       // Add debug logging
-      console.log("Sending event data:", eventData);
-      console.log("Event data types:", {
+      logger.info("Sending event data:", eventData);
+      logger.info("Event data types:", {
         title: typeof eventData.title,
         start: typeof eventData.start,
         end: typeof eventData.end,
@@ -133,11 +134,11 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         onClose();
       } else {
         const errorData = await response.json();
-        console.error("=== API ERROR DETAILS ===");
-        console.error("Status:", response.status);
-        console.error("Status Text:", response.statusText);
-        console.error("Error Data:", errorData);
-        console.error(
+        logger.error("=== API ERROR DETAILS ===");
+        logger.error("Status:", response.status);
+        logger.error("Status Text:", response.statusText);
+        logger.error("Error Data:", errorData);
+        logger.error(
           "Response Headers:",
           Object.fromEntries(response.headers.entries())
         );
@@ -146,7 +147,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         );
       }
     } catch (err) {
-      console.error("Error creating event:", err);
+      logger.error("Error creating event:", err);
       setError("Failed to create event. Please try again.");
     } finally {
       setIsSubmitting(false);

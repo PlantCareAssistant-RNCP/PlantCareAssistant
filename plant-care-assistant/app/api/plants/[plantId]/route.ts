@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getUserIdFromSupabase } from "@utils/auth";
+import logger from "@utils/logger"
 
 const prisma = new PrismaClient();
 
@@ -36,7 +37,7 @@ export async function GET(
 
     return NextResponse.json(plant, { status: 200 });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to fetch plant" },
       { status: 500 }
@@ -84,7 +85,7 @@ export async function PUT(
 
     return NextResponse.json(updatedPlant, { status: 200 });
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to update plant" },
       { status: 500 }
@@ -129,7 +130,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { error: "Failed to delete plant" },
       { status: 500 }
