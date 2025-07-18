@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import Icon from "@components/common/Icon";
-import { dummyPosts } from "@components/features/feed/FeedList"; // ← attention, il faut que ce soit une `export const`, pas `default`
+import { dummyPosts } from "@components/features/feed/FeedList";
 
 export default function PostPage() {
   const params = useParams();
@@ -23,29 +23,33 @@ export default function PostPage() {
     <div className="flex flex-col h-[100dvh] pt-20 px-4">
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto space-y-4 pb-36">
-        {/* Image principale + bouton retour */}
-        <div className="relative w-full h-64 rounded-xl overflow-hidden">
-          <Image
-            src={post.imageUrl}
-            alt={`Post by ${post.username}`}
-            fill
-            className="object-cover"
-          />
-          <Link href="/feed" className="fixed top-15 left-2 z-50 p-2">
-            <Icon name="backIcon" size={50} />
-          </Link>
-        </div>
-
-        {/* Contenu du post */}
-        <div className="bg-[#E8E8E8] rounded-xl p-4 shadow space-y-2">
-          <div className="flex justify-between text-sm font-semibold text-black">
-            <span>{post.username}</span>
-            <span>{post.date ?? "Non daté"}</span>
+        
+        {/* ✅ Bloc image + description dans un encadré gris clair */}
+        <div className="bg-[#E8E8E8] rounded-xl p-3 shadow-sm border border-gray-300 space-y-3">
+          {/* Image principale + bouton retour */}
+          <div className="relative w-full h-64 rounded-xl overflow-hidden">
+            <Image
+              src={post.imageUrl}
+              alt={`Post by ${post.username}`}
+              fill
+              className="object-cover"
+            />
+            <Link href="/feed" className="fixed top-15 left-1 z-50 p-2">
+              <Icon name="backIcon" size={50} />
+            </Link>
           </div>
-          <p className="text-sm text-gray-700">{post.description}</p>
-          <div className="flex items-center gap-1 text-sm text-gray-600 mt-2">
-            <Icon name="commentBlack" size={20} />
-            <span>{post.commentsCount}</span>
+
+          {/* Contenu du post */}
+          <div className="rounded-xl p-2 space-y-2">
+            <div className="flex justify-between text-sm font-semibold text-black">
+              <span>{post.username}</span>
+              <span>{post.date ?? "Non daté"}</span>
+            </div>
+            <p className="text-sm text-gray-700">{post.description}</p>
+            <div className="flex items-center gap-1 text-sm text-gray-600 mt-2">
+              <Icon name="commentBlack" size={20} />
+              <span>{post.commentsCount}</span>
+            </div>
           </div>
         </div>
 

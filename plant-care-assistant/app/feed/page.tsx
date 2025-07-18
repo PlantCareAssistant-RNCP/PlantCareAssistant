@@ -12,7 +12,7 @@ export default function FeedPage() {
 
       {/* Bouton flottant */}
       <Link href="/createpost">
-        <div className="fixed bottom-24 right-6 z-[9999] shadow-lg">
+        <div className="fixed bottom-20 right-6 z-[9999] shadow-lg">
           <Icon name="buttonAddPost" size={70} />
         </div>
       </Link>
