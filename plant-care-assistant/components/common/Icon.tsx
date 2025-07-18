@@ -24,11 +24,14 @@ import Dashboard from '@icons/dashboard_icon.svg';
 import Dashboardwhite from '@icons/dashboard_icon_white.svg';
 import Photo from '@icons/photo_icon.svg';
 import Plant from '@icons/plant_icon.svg';
+import SendIcon from '@icons/send_icon.svg';
+import BackIcon from '@icons/back_icon.svg';
 
 import ButtonCalendar from '@icons/button_calendar.svg';
 import ButtonFeed from '@icons/button_feed.svg';
 import ButtonIdentification from '@icons/button_identification.svg';
 import ButtonPlant from '@icons/button_plant.svg';
+import ButtonAddPost from '@icons/create_post_button.svg';
 
 const icons = {
   arrowLeft: ArrowLeft,
@@ -53,7 +56,10 @@ const icons = {
   buttonCalendar: ButtonCalendar,
   buttonFeed: ButtonFeed,
   buttonIdentification: ButtonIdentification,
-  buttonPlant: ButtonPlant
+  buttonPlant: ButtonPlant,
+  buttonAddPost: ButtonAddPost,
+  sendIcon: SendIcon,
+  backIcon: BackIcon,
 };
 
 type IconName = keyof typeof icons;
