@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import Icon from "@components/common/Icon";
@@ -8,8 +8,12 @@ import { dummyPosts } from "@components/features/feed/FeedList";
 
 export default function PostPage() {
   const params = useParams();
+  const router = useRouter();
   const postId = Number(params.id);
   const post = dummyPosts.find((p) => p.id === postId);
+
+  const currentUser = "John Doe";
+  const isOwner = post?.username === currentUser;
 
   if (!post) {
     return (
@@ -21,12 +25,9 @@ export default function PostPage() {
 
   return (
     <div className="flex flex-col h-[100dvh] pt-20 px-4">
-      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto space-y-4 pb-36">
-        
-        {/* ✅ Bloc image + description dans un encadré gris clair */}
+        {/* Image + description */}
         <div className="bg-[#E8E8E8] rounded-xl p-3 shadow-sm border border-gray-300 space-y-3">
-          {/* Image principale + bouton retour */}
           <div className="relative w-full h-64 rounded-xl overflow-hidden">
             <Image
               src={post.imageUrl}
@@ -39,7 +40,6 @@ export default function PostPage() {
             </Link>
           </div>
 
-          {/* Contenu du post */}
           <div className="rounded-xl p-2 space-y-2">
             <div className="flex justify-between text-sm font-semibold text-black">
               <span>{post.username}</span>
@@ -51,12 +51,25 @@ export default function PostPage() {
               <span>{post.commentsCount}</span>
             </div>
           </div>
+
+          {/* ✅ Bouton modifier si propriétaire */}
+          {isOwner && (
+            <div className="pt-2">
+              <button
+                onClick={() => router.push(`/editpost/${post.id}`)}
+                className="w-full text-center text-sm text-white font-medium bg-[#0A9788] hover:bg-teal-700 py-2 rounded-full transition"
+                aria-label="Edit this post"
+              >
+                Modifier
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Liste des commentaires */}
+        {/* Commentaires */}
         <div className="space-y-3">
-          {(post.comments?.length ?? 0) > 0 ? (
-            post.comments.map((comment: any) => (
+          {post.comments?.length > 0 ? (
+            post.comments.map((comment) => (
               <div
                 key={comment.id}
                 className="bg-white rounded-xl shadow p-3 text-sm"
@@ -76,7 +89,7 @@ export default function PostPage() {
         </div>
       </div>
 
-      {/* Fixed comment input */}
+      {/* Champ de commentaire */}
       <div className="fixed bottom-4 left-4 right-4 pb-10">
         <form className="flex items-center bg-white rounded-full px-4 py-2 gap-2 border border-gray-400 shadow-md">
           <input
