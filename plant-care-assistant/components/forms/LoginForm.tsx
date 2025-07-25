@@ -5,8 +5,7 @@ import Link from "next/link";
 import Logo from "@components/common/Logo";
 import { useAuth } from "../../providers/AuthProvider";
 import { useRouter } from "next/navigation";
-import logger from "@utils/logger"
-
+import logger from "@utils/logger";
 
 export default function LoginForm() {
   const [form, setForm] = useState({
@@ -31,7 +30,11 @@ export default function LoginForm() {
       await signIn(form.email, form.password);
       router.push("/dashboard"); // Redirect to dashboard after successful login
     } catch (error) {
-      logger.error("Login error:", error);
+      logger.error("Login error", {
+        email: form.email,
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
       setError(
         error instanceof Error
           ? error.message

@@ -1,19 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
-import { getUserIdFromSupabase } from "@utils/auth";
 import {
   validateUser,
   isValidationError,
   validationErrorResponse,
 } from "@utils/validation";
-import logger from "@utils/logger";
+import {
+  createRequestContext,
+  logRequest,
+  logResponse,
+  logError,
+} from "@utils/apiLogger";
 
 const prisma = new PrismaClient();
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const context = createRequestContext(request, "/api/users");
+
   try {
-    const userId = await getUserIdFromSupabase(request);
-    if (!userId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -37,9 +45,17 @@ export async function GET(request: Request) {
       },
     });
 
+    logResponse(context, 200, {
+      userCount: users.length,
+      searchUsername: username || "none",
+      hasResults: users.length > 0,
+    });
+
     return NextResponse.json(users, { status: 200 });
   } catch (error) {
-    logger.error(error);
+    logError(context, error as Error, {
+      operation: "search_users",
+    });
     return NextResponse.json(
       { error: "Failed to fetch users" },
       { status: 500 }
@@ -47,21 +63,29 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const context = createRequestContext(request, "/api/users");
+
   try {
-    const currentUserId = await getUserIdFromSupabase(request);
-    if (!currentUserId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const currentUser = await prisma.userProfile.findFirst({
       where: {
-        id: currentUserId,
+        id: context.userId,
         deleted_at: null,
       },
     });
 
     if (!currentUser?.isAdmin) {
+      logResponse(context, 403, {
+        attemptedAction: "create_user",
+        isAdmin: false,
+      });
       return NextResponse.json(
         { error: "Forbidden: Admin access required" },
         { status: 403 }
@@ -72,6 +96,10 @@ export async function POST(request: Request) {
 
     const validationResult = validateUser(body);
     if (isValidationError(validationResult)) {
+      logResponse(context, 400, {
+        validationError: validationResult.error,
+        errorType: "validation",
+      });
       return validationErrorResponse(validationResult);
     }
 
@@ -85,6 +113,10 @@ export async function POST(request: Request) {
     });
 
     if (existingUser) {
+      logResponse(context, 409, {
+        conflictingUsername: validUser.username,
+        errorType: "username_conflict",
+      });
       return NextResponse.json(
         { error: "Username or email already exists" },
         { status: 409 }
@@ -93,7 +125,7 @@ export async function POST(request: Request) {
 
     const newUser = await prisma.userProfile.create({
       data: {
-        username: body.username,
+        username: validUser.username,
         created_at: new Date(),
         updated_at: null,
         deleted_at: null,
@@ -105,9 +137,16 @@ export async function POST(request: Request) {
       },
     });
 
+    logResponse(context, 201, {
+      createdUserId: newUser.id,
+      createdUsername: newUser.username,
+    });
+
     return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
-    logger.error(error);
+    logError(context, error as Error, {
+      operation: "create_user_admin",
+    });
     return NextResponse.json(
       { error: "Failed to create user" },
       { status: 500 }

@@ -1,34 +1,29 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getUserIdFromSupabase } from "@utils/auth";
 import {
   isValidationError,
   validateEvent,
   validationErrorResponse,
 } from "@utils/validation";
-import logger from "@utils/logger"
+import { createRequestContext, logRequest, logResponse, logError } from "@utils/apiLogger";
 
 const prisma = new PrismaClient();
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const context = createRequestContext(request, '/api/events');
+
   try {
-    logger.info("GET /api/events called");
+    await logRequest(context, request);
 
-    // Get authenticated user ID
-    const userId = await getUserIdFromSupabase(request);
-    logger.info("User ID:", userId);
-
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if(!context.userId){
+      logResponse(context, 401);
+      return NextResponse.json({error: "Unauthorised"}, {status: 401});
     }
-
-    // Log the user ID type for debugging
-    logger.info("User ID type:", typeof userId);
 
     // Fetch events for the user
     const events = await prisma.event.findMany({
       where: {
-        userId: userId,
+        userId: context.userId,
         // If your events have a deleted_at field, add:
         // deleted_at: null
       },
@@ -40,12 +35,12 @@ export async function GET(request: Request) {
       },
     });
 
-    logger.info(`Found ${events.length} events for user`);
+    logResponse(context,200, {eventCount: events.length})
 
     // Return events (even if empty array)
     return NextResponse.json(events);
   } catch (error) {
-    logger.error("Error fetching events:", error);
+    logError(context,error as Error, {operation: "fetch_events"})
     return NextResponse.json(
       { error: "Failed to fetch events" },
       { status: 500 }
@@ -54,11 +49,15 @@ export async function GET(request: Request) {
 }
 
 // Create a new event
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const context = createRequestContext(request, '/api/events')
   try {
-    const userId = await getUserIdFromSupabase(request);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    await logRequest(context, request)
+
+    if(!context.userId){
+      logResponse(context, 401)
+      return NextResponse.json({error: "Unauthorised"},{status: 401})
     }
 
     const body = await request.json();
@@ -66,6 +65,9 @@ export async function POST(request: Request) {
     // Validate required fields
     const validationResult = validateEvent(body);
     if (isValidationError(validationResult)) {
+      logResponse(context, 400, {
+        validationError: validationResult.error, errorType: "validation"
+      })
       return validationErrorResponse(validationResult);
     }
 
@@ -77,7 +79,7 @@ export async function POST(request: Request) {
         end: body.end ? new Date(body.end) : null,
         // Use connect syntax for relations instead of direct ID assignment
         user: {
-          connect: { id: userId },
+          connect: { id: context.userId },
         },
         // Only include plant relation if plantId is provided
         ...(body.plantId
@@ -90,9 +92,17 @@ export async function POST(request: Request) {
       },
     });
 
+    logResponse(context, 201, {
+      eventId: event.id,
+      hasPlant: !!body.plantId,
+      eventTitle: body.title
+    });
     return NextResponse.json(event, { status: 201 });
+
   } catch (error) {
-    logger.error("Error creating event:", error);
+    logError(context, error as Error, {
+      operation: "create_event",
+    });
     return NextResponse.json(
       {
         error: "Failed to create event",

@@ -1,29 +1,44 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getUserIdFromSupabase } from "@utils/auth";
-import { 
-  validateId, 
-  validateComment, 
-  isValidationError, 
-  validationErrorResponse 
+import {
+  validateId,
+  validateComment,
+  isValidationError,
+  validationErrorResponse,
 } from "@utils/validation";
-import logger from "@utils/logger"
+import {
+  createRequestContext,
+  logRequest,
+  logResponse,
+  logError,
+} from "@utils/apiLogger";
 
 const prisma = new PrismaClient();
 
 export async function GET(
-  request: Request,
-    props: { params: Promise<{ postId: string; commentId: string }> } 
+  request: NextRequest,
+  props: { params: Promise<{ postId: string; commentId: string }> }
 ) {
+  const params = await props.params;
+  const context = createRequestContext(
+    request,
+    `/api/social/posts/${params.postId}/comments/${params.commentId}`
+  );
+
   try {
-    const params = await props.params
-    const userId = await getUserIdFromSupabase(request);
-    if (!userId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const commentIdResult = validateId(params.commentId);
     if (isValidationError(commentIdResult)) {
+      logResponse(context, 400, {
+        validationError: commentIdResult.error,
+        errorType: "commentId_validation",
+      });
       return validationErrorResponse(commentIdResult);
     }
     const commentId = commentIdResult;
@@ -31,25 +46,36 @@ export async function GET(
     const comment = await prisma.comment.findFirst({
       where: {
         comment_id: commentId,
-        deleted_at: null
+        deleted_at: null,
       },
       include: {
         USER: {
           select: {
             id: true,
-            username: true
-          }
-        }
-      }
+            username: true,
+          },
+        },
+      },
     });
 
     if (!comment) {
+      logResponse(context, 404, { commentId: commentId });
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
 
+    logResponse(context, 200, {
+      commentId: commentId,
+      postId: params.postId,
+      commentAuthor: comment.USER.username || "unknown",
+    });
+
     return NextResponse.json(comment, { status: 200 });
   } catch (error: unknown) {
-    logger.error(error);
+    logError(context, error as Error, {
+      operation: "fetch_single_comment",
+      commentId: params.commentId,
+      postId: params.postId,
+    });
     return NextResponse.json(
       { error: "Failed to fetch comment" },
       { status: 500 }
@@ -58,40 +84,56 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
-    props: { params: Promise<{ postId: string; commentId: string }> } 
+  request: NextRequest,
+  props: { params: Promise<{ postId: string; commentId: string }> }
 ) {
+  const params = await props.params;
+  const context = createRequestContext(
+    request,
+    `/api/social/posts/${params.postId}/comments/${params.commentId}`
+  );
+
   try {
-    const params = await props.params
-    const userId = await getUserIdFromSupabase(request);
-    if (!userId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     const commentIdResult = validateId(params.commentId);
     if (isValidationError(commentIdResult)) {
+      logResponse(context, 400, {
+        validationError: commentIdResult.error,
+        errorType: "commentId_validation",
+      });
       return validationErrorResponse(commentIdResult);
     }
     const commentId = commentIdResult;
-    
+
     const body = await request.json();
 
     const validationResult = validateComment(body);
     if (isValidationError(validationResult)) {
+      logResponse(context, 400, {
+        validationError: validationResult.error,
+        errorType: "comment_validation",
+      });
       return validationErrorResponse(validationResult);
     }
-    
+
     const validComment = validationResult;
 
     const existingComment = await prisma.comment.findFirst({
       where: {
         comment_id: commentId,
-        user_id: userId,
-        deleted_at: null
-      }
+        user_id: context.userId,
+        deleted_at: null,
+      },
     });
 
     if (!existingComment) {
+      logResponse(context, 404, { commentId: commentId });
       return NextResponse.json(
         { error: "Comment not found or you don't have permission to edit it" },
         { status: 404 }
@@ -103,13 +145,24 @@ export async function PUT(
       data: {
         content: validComment.content,
         photo: validComment.photo,
-        updated_at: new Date()
-      }
+        updated_at: new Date(),
+      },
+    });
+
+    logResponse(context, 200, {
+      commentId: commentId,
+      postId: params.postId,
+      contentLength: validComment.content.length,
+      hasPhoto: !!validComment.photo,
     });
 
     return NextResponse.json(updatedComment, { status: 200 });
   } catch (error: unknown) {
-    logger.error(error);
+    logError(context, error as Error, {
+      operation: "update_comment",
+      commentId: params.commentId,
+      postId: params.postId,
+    });
     return NextResponse.json(
       { error: "Failed to update comment" },
       { status: 500 }
@@ -118,18 +171,29 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
-    props: { params: Promise<{ postId: string; commentId: string }> } 
+  request: NextRequest,
+  props: { params: Promise<{ postId: string; commentId: string }> }
 ) {
+  const params = await props.params;
+  const context = createRequestContext(
+    request,
+    `/api/social/posts/${params.postId}/comments/${params.commentId}`
+  );
+
   try {
-    const params = await props.params
-    const userId = await getUserIdFromSupabase(request);
-    if (!userId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     const commentIdResult = validateId(params.commentId);
     if (isValidationError(commentIdResult)) {
+      logResponse(context, 400, {
+        validationError: commentIdResult.error,
+        errorType: "commentId_validation",
+      });
       return validationErrorResponse(commentIdResult);
     }
     const commentId = commentIdResult;
@@ -137,21 +201,30 @@ export async function DELETE(
     const existingComment = await prisma.comment.findFirst({
       where: {
         comment_id: commentId,
-        user_id: userId,
-        deleted_at: null
-      }
+        user_id: context.userId,
+        deleted_at: null,
+      },
     });
 
     if (!existingComment) {
+      logResponse(context, 404, { commentId: commentId });
       return NextResponse.json(
-        { error: "Comment not found or you don't have permission to delete it" },
+        {
+          error: "Comment not found or you don't have permission to delete it",
+        },
         { status: 404 }
       );
     }
 
     await prisma.comment.update({
       where: { comment_id: commentId },
-      data: { deleted_at: new Date() }
+      data: { deleted_at: new Date() },
+    });
+
+    logResponse(context, 200, {
+      deletedCommentId: commentId,
+      postId: params.postId,
+      originalContent: existingComment.content.substring(0, 50) + "...",
     });
 
     return NextResponse.json(
@@ -159,7 +232,11 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: unknown) {
-    logger.error(error);
+    logError(context, error as Error, {
+      operation: "delete_comment",
+      commentId: params.commentId,
+      postId: params.postId,
+    });
     return NextResponse.json(
       { error: "Failed to delete comment" },
       { status: 500 }

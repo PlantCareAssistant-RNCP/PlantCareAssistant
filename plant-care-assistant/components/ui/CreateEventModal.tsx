@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../providers/AuthProvider";
 import { DateTime } from "luxon";
-import logger from "@utils/logger"
+import logger from "@utils/logger";
 
 interface CreateEventModalProps {
   isOpen: boolean;
@@ -68,14 +68,21 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           },
         });
 
-        if (response.ok) {
+        if (!response.ok) {
+          // ✅ MINIMAL: Only log API failures
+          logger.error("Plants fetch failed", {
+            endpoint: "/api/plants",
+            status: response.status,
+          });
+        } else {
           const data = await response.json();
           setPlants(data);
-        } else {
-          logger.error("Failed to fetch plants");
         }
       } catch (err) {
-        logger.error("Error fetching plants:", err);
+        logger.error("Plants fetch network error", {
+          endpoint: "/api/plants",
+          error: err instanceof Error ? err.message : "Unknown error",
+        });
       } finally {
         setIsLoadingPlants(false);
       }
@@ -111,15 +118,6 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         plantId: plantId === "" ? null : plantId,
       };
 
-      // Add debug logging
-      logger.info("Sending event data:", eventData);
-      logger.info("Event data types:", {
-        title: typeof eventData.title,
-        start: typeof eventData.start,
-        end: typeof eventData.end,
-        plantId: typeof eventData.plantId,
-      });
-
       const response = await fetch(`/api/users/${session.user?.id}/events`, {
         method: "POST",
         headers: {
@@ -133,21 +131,25 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         onEventCreated();
         onClose();
       } else {
+        logger.error("Event creation failed", {
+          endpoint: `/api/users/${session.user?.id}/events`,
+          status: response.status,
+          eventTitle: title.trim(),
+          hasPlant: plantId !== "",
+        });
+
         const errorData = await response.json();
-        logger.error("=== API ERROR DETAILS ===");
-        logger.error("Status:", response.status);
-        logger.error("Status Text:", response.statusText);
-        logger.error("Error Data:", errorData);
-        logger.error(
-          "Response Headers:",
-          Object.fromEntries(response.headers.entries())
-        );
         setError(
           errorData.message || errorData.error || "Failed to create event"
         );
       }
     } catch (err) {
-      logger.error("Error creating event:", err);
+      // ✅ MINIMAL: Only network errors
+      logger.error("Event creation network error", {
+        endpoint: `/api/users/${session.user?.id}/events`,
+        error: err instanceof Error ? err.message : "Unknown error",
+        eventTitle: title.trim(),
+      });
       setError("Failed to create event. Please try again.");
     } finally {
       setIsSubmitting(false);

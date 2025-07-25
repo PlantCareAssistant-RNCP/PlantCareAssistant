@@ -1,23 +1,45 @@
-import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-import logger from "@utils/logger"
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+import {
+  createRequestContext,
+  logRequest,
+  logResponse,
+  logError,
+} from "@utils/apiLogger";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
-export async function POST(req: Request) {
-  const { id, username } = await req.json()
+export async function POST(request: NextRequest) {
+  const context = createRequestContext(
+    request,
+    "/api/auth/create-user-profile"
+  );
 
   try {
+    await logRequest(context, request);
+
+    const { id, username } = await request.json();
+
     await prisma.userProfile.create({
       data: {
         id, // must match Supabase Auth user ID
         username,
       },
-    })
+    });
 
-    return NextResponse.json({ success: true })
+    logResponse(context, 200, {
+      createdUserId: id,
+      username: username,
+    });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error('Create UserProfile failed:', error)
-    return NextResponse.json({ error: 'UserProfile creation failed' }, { status: 500 })
+    logError(context, error as Error, {
+      operation: "create_user_profile",
+    });
+    return NextResponse.json(
+      { error: "UserProfile creation failed" },
+      { status: 500 }
+    );
   }
 }
