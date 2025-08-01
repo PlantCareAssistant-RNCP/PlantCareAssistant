@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../providers/AuthProvider";
+import logger from "@utils/logger"
 
 interface CalendarEvent {
   id: number;
@@ -88,7 +89,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
         setError(errorData.message || "Failed to delete event");
       }
     } catch (err) {
-      console.error("Error deleting event:", err);
+      logger.error("Error deleting event:", err);
       setError("Failed to delete event. Please try again.");
     } finally {
       setIsDeleting(false);

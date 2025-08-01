@@ -5,6 +5,7 @@ import Link from "next/link";
 import Logo from "@components/common/Logo";
 import { useAuth } from "../../providers/AuthProvider";
 import { useRouter } from "next/navigation";
+import logger from "@utils/logger";
 
 export default function RegisterForm() {
   const [form, setForm] = useState({
@@ -36,7 +37,11 @@ export default function RegisterForm() {
       await signUp(form.email, form.password, form.username);
       router.push("/login");
     } catch (error) {
-      console.error("Registration error:", error);
+      logger.error("Registration error", {
+        email: form.email,
+        username: form.username,
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+      });
       setError(
         error instanceof Error
           ? error.message
