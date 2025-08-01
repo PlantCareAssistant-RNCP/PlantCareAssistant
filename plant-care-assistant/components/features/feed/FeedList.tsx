@@ -139,6 +139,61 @@ export const dummyPosts = [
         time: "13:30"
       }
     ]
+  },
+  {
+    id: 5,
+    username: "John Doe",
+    description: "Mon aloe vera a enfin fleuri, je suis tellement content ! 🌸",
+    imageUrl: "/images/aloe-vera.jpg",
+    commentsCount: 3,
+    date: "2023-10-05",
+    comments: [
+      {
+        id: 1,
+        username: "Sophie",
+        text: "C'est rare de voir un aloe vera fleurir, bravo !",
+        date: "2023-10-05",
+        time: "09:00"
+      },
+      {
+        id: 2,
+        username: "Marc",
+        text: "Tu fais quelque chose de spécial pour qu'il fleurisse ?",
+        date: "2023-10-05",
+        time: "10:15"
+      },
+      {
+        id: 3,
+        username: "Emma",
+        text: "Magnifique ! Ça doit être gratifiant de le voir fleurir.",
+        date: "2023-10-05",
+        time: "11:30"
+      }
+    ]
+  },
+  {
+    id: 6,
+    username: "John Doe",
+    description: "J’ai essayé de bouturer mon pothos, croisons les doigts 🤞",
+    imageUrl: "/images/pothos.jpg",
+    commentsCount: 2,
+    date: "2023-10-06",
+    comments: [
+      {
+        id: 1,
+        username: "Lucie",
+        text: "Les pothos sont super faciles à bouturer, ça va marcher !",
+        date: "2023-10-06",
+        time: "08:45"
+      },
+      {
+        id: 2,
+        username: "Antoine",
+        text: "Hâte de voir le résultat, tiens-nous au courant !",
+        date: "2023-10-06",
+        time: "09:20"
+      }
+    ]
   }
 ];
 
@@ -153,6 +208,7 @@ export default function FeedList() {
               description={post.description}
               imageUrl={post.imageUrl}
               commentsCount={post.commentsCount}
+              date={post.date}
             />
           </Link>
         </div>

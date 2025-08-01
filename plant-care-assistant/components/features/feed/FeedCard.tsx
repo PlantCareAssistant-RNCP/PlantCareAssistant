@@ -1,11 +1,12 @@
 import Image from "next/image";
-import Icon from "@components/common/Icon"
+import Icon from "@components/common/Icon";
 
 interface FeedCardProps {
   username: string;
   description: string;
   imageUrl: string;
   commentsCount: number;
+  date: string; // ✅ Ajout de la prop date
 }
 
 export default function FeedCard({
@@ -13,6 +14,7 @@ export default function FeedCard({
   description,
   imageUrl,
   commentsCount,
+  date,
 }: FeedCardProps) {
   return (
     <div className="bg-[#E8E8E8] text-black rounded-xl shadow-md overflow-hidden space-y-2 p-3">
@@ -24,8 +26,15 @@ export default function FeedCard({
           className="object-cover"
         />
       </div>
-      <div className="text-sm font-semibold">{username}</div>
+
+      {/* ✅ Username + Date */}
+      <div className="flex justify-between items-center text-sm font-semibold">
+        <span>{username}</span>
+        <span className="text-xs text-black">{date}</span>
+      </div>
+
       <p className="text-sm text-gray-600 line-clamp-2">{description}</p>
+
       <div className="flex items-center text-sm text-gray-500 gap-1">
         <Icon name="commentBlack" size={20} className="text-gray-500" />
         <span>{commentsCount}</span>
