@@ -1,7 +1,6 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
-import logger from "@utils/logger"
+import { createServerSupabaseClient } from "../lib/supabaseServer";
+import logger from "@utils/logger";
 
 export async function getUserIdFromSupabase(
   req: Request
@@ -33,34 +32,36 @@ export async function getUserIdFromSupabase(
 
     // Get user with the token
     try {
-      logger.info("Calling supabase.auth.getUser with token")
-      const { data, error } = await supabase.auth.getUser(token)
+      logger.info("Calling supabase.auth.getUser with token");
+      const { data, error } = await supabase.auth.getUser(token);
       
       if (error) {
-        logger.error("Supabase auth error:", error.message)
-        return null
+        logger.error("Supabase auth error:", error.message);
+        return null;
       }
       
-      logger.info("Auth successful, user:", data.user?.id ? `${data.user.id.substring(0, 8)}...` : "null")
-      return data.user?.id || null
+      logger.info("Auth successful, user:", data.user?.id ? `${data.user.id.substring(0, 8)}...` : "null");
+      return data.user?.id || null;
     } catch (error) {
-      logger.error("Exception in token auth:", error)
-      return null
+      logger.error("Exception in token auth:", error);
+      return null;
     }
   }
 
   // Fallback to cookie-based auth for browser requests
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const supabase = await createServerSupabaseClient();
     const {
       data: { user },
       error,
     } = await supabase.auth.getUser();
 
     if (error || !user) {
+      logger.info("Cookie auth failed:", error?.message || "No user");
       return null;
     }
 
+    logger.info("Cookie auth successful, user:", user.id ? `${user.id.substring(0, 8)}...` : "null");
     return user.id;
   } catch (error) {
     logger.error("Error with cookie auth:", error);

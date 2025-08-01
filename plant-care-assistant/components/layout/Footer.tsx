@@ -1,6 +1,7 @@
 // components/layout/footer.tsx
 "use client";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Icon from "@components/common/Icon";
 
 export default function Footer() {

@@ -6,6 +6,14 @@ import Link from "next/link";
 import Icon from "@components/common/Icon";
 import { dummyPosts } from "@components/features/feed/FeedList";
 
+type Comment = {
+  id: number;
+  username: string;
+  date: string;
+  time: string;
+  text: string;
+};
+
 export default function PostPage() {
   const params = useParams();
   const postId = Number(params.id);
@@ -56,7 +64,7 @@ export default function PostPage() {
         {/* Liste des commentaires */}
         <div className="space-y-3">
           {(post.comments?.length ?? 0) > 0 ? (
-            post.comments.map((comment: any) => (
+            post.comments.map((comment: Comment) => (
               <div
                 key={comment.id}
                 className="bg-white rounded-xl shadow p-3 text-sm"
