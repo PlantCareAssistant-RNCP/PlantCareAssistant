@@ -27,7 +27,7 @@ interface ApiEventResponse {
 }
 
 const CalendarPage: React.FC = () => {
-  const { session } = useAuth();
+  const { user } = useAuth();
   // eslint-disable-next-line
   const [timezone, setTimezone] = useState(defaultTZ);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -43,13 +43,13 @@ const CalendarPage: React.FC = () => {
 
   // Function to fetch events from your API
   const fetchEvents = useCallback(async () => {
-    logger.info("Session check:", {
-      hasSession: !!session,
-      hasAccessToken: !!session?.access_token,
-      tokenLength: session?.access_token?.length,
+    logger.info("User check:", {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
     });
 
-    if (!session?.access_token) {
+    if (!user) {
       setIsLoading(false);
       return;
     }
@@ -58,9 +58,9 @@ const CalendarPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
+
       const response = await fetch("/api/events", {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
           "Content-Type": "application/json",
         },
       });
@@ -97,9 +97,9 @@ const CalendarPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [session]);
+  }, [user]);
 
-  // Fetch events when component mounts or session changes
+  // Fetch events when component mounts or user changes
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
