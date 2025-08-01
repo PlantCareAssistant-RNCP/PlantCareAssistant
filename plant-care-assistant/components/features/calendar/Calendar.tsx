@@ -6,6 +6,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/calendar.css";
 import CreateEventModal from "@components/ui/CreateEventModal";
 import EventDetailsModal from "@components/ui/EventDetailsModal";
+import logger from "@utils/logger"
 
 const defaultTZ = DateTime.local().zoneName;
 
@@ -42,7 +43,7 @@ const CalendarPage: React.FC = () => {
 
   // Function to fetch events from your API
   const fetchEvents = useCallback(async () => {
-    console.log("Session check:", {
+    logger.info("Session check:", {
       hasSession: !!session,
       hasAccessToken: !!session?.access_token,
       tokenLength: session?.access_token?.length,
@@ -91,7 +92,7 @@ const CalendarPage: React.FC = () => {
 
       setEvents(transformedEvents);
     } catch (err) {
-      console.error("Error fetching events:", err);
+      logger.error("Error fetching events:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch events");
     } finally {
       setIsLoading(false);

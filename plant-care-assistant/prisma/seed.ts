@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { randomUUID } from "crypto";
+import logger from "@utils/logger"
 
 const prisma = new PrismaClient();
 
@@ -71,12 +72,12 @@ async function seed() {
     ]
   });
 
-  console.log("Seeding complete");
+  logger.info("Seeding complete");
 }
 
 seed()
   .catch((e) => {
-    console.error(e);
+    logger.error(e);
     process.exit(1);
   })
   .finally(() => {

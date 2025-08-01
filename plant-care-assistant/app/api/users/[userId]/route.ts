@@ -1,30 +1,39 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
-import { getUserIdFromSupabase } from "@utils/auth";
 import {
   validationErrorResponse,
   isValidationError,
   validatePartialUser,
 } from "@utils/validation";
+import {
+  createRequestContext,
+  logRequest,
+  logResponse,
+  logError,
+} from "@utils/apiLogger";
 
 const prisma = new PrismaClient();
 
 // Get a single user by ID
 export async function GET(
-  request: Request,
-  props: { params: Promise<{ userId: string }> } 
+  request: NextRequest,
+  props: { params: Promise<{ userId: string }> }
 ) {
+  const params = await props.params;
+  const context = createRequestContext(request, `/api/users/${params.userId}`);
+
   try {
-    const params = await props.params
-    const currentUserId = await getUserIdFromSupabase(request);
-    if (!currentUserId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const targetUserId = params.userId;
 
-    // Security: Users can only view their own profile
-    if (currentUserId !== targetUserId) {
+    if (context.userId !== targetUserId) {
+      logResponse(context, 403, { attemptedUserId: targetUserId });
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -41,12 +50,21 @@ export async function GET(
     });
 
     if (!user) {
+      logResponse(context, 404, { requestedUserId: targetUserId });
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    logResponse(context, 200, {
+      targetUserId: targetUserId,
+      hasUsername: !!user.username,
+    });
+
     return NextResponse.json(user, { status: 200 });
   } catch (error) {
-    console.error(error);
+    logError(context, error as Error, {
+      operation: "fetch_user_profile",
+      targetUserId: params.userId,
+    });
     return NextResponse.json(
       { error: "Failed to fetch user" },
       { status: 500 }
@@ -56,20 +74,24 @@ export async function GET(
 
 // Update a user
 export async function PUT(
-  request: Request,
-  props: { params: Promise<{ userId: string }> }  
+  request: NextRequest,
+  props: { params: Promise<{ userId: string }> }
 ) {
+  const params = await props.params;
+  const context = createRequestContext(request, `/api/users/${params.userId}`);
+
   try {
-    const params = await props.params
-    const currentUserId = await getUserIdFromSupabase(request);
-    if (!currentUserId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const targetUserId = params.userId;
 
-    // Security: Users can only update their own profile
-    if (currentUserId !== targetUserId) {
+    if (context.userId !== targetUserId) {
+      logResponse(context, 403, { attemptedUserId: targetUserId });
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -77,20 +99,22 @@ export async function PUT(
 
     const validationResult = validatePartialUser(body);
 
-    // Check if validation failed
     if (isValidationError(validationResult)) {
+      logResponse(context, 400, {
+        validationError: validationResult.error,
+        errorType: "validation",
+      });
       return validationErrorResponse(validationResult);
     }
 
-    // If validation passed but no fields to update were provided
     if (Object.keys(validationResult).length === 0) {
+      logResponse(context, 400, { errorType: "no_fields_to_update" });
       return NextResponse.json(
         { error: "No valid fields to update" },
         { status: 400 }
       );
     }
 
-    // Check if user exists
     const existingUser = await prisma.userProfile.findFirst({
       where: {
         id: targetUserId,
@@ -99,10 +123,10 @@ export async function PUT(
     });
 
     if (!existingUser) {
+      logResponse(context, 404, { requestedUserId: targetUserId });
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if new username already exists
     if (validationResult.username) {
       const conflicts = await prisma.userProfile.findFirst({
         where: {
@@ -113,6 +137,10 @@ export async function PUT(
       });
 
       if (conflicts) {
+        logResponse(context, 409, {
+          conflictingUsername: validationResult.username,
+          errorType: "username_conflict",
+        });
         return NextResponse.json(
           { error: "Username already in use" },
           { status: 409 }
@@ -120,16 +148,13 @@ export async function PUT(
       }
     }
 
-    // Prepare data for update
     const updateData: Prisma.UserProfileUpdateInput = {
       updated_at: new Date(),
     };
 
-    // Only update fields that are provided
     if (validationResult.username)
       updateData.username = validationResult.username;
 
-    // Update the user
     const updatedUser = await prisma.userProfile.update({
       where: { id: targetUserId },
       data: updateData,
@@ -141,9 +166,18 @@ export async function PUT(
       },
     });
 
+    logResponse(context, 200, {
+      targetUserId: targetUserId,
+      updatedFields: Object.keys(validationResult).join(", "),
+      newUsername: validationResult.username || "unchanged",
+    });
+
     return NextResponse.json(updatedUser, { status: 200 });
   } catch (error) {
-    console.error(error);
+    logError(context, error as Error, {
+      operation: "update_user_profile",
+      targetUserId: params.userId,
+    });
     return NextResponse.json(
       { error: "Failed to update user" },
       { status: 500 }
@@ -153,24 +187,27 @@ export async function PUT(
 
 // Delete a user (soft delete)
 export async function DELETE(
-  request: Request,
-  props: { params: Promise<{ userId: string }> } 
+  request: NextRequest,
+  props: { params: Promise<{ userId: string }> }
 ) {
+  const params = await props.params;
+  const context = createRequestContext(request, `/api/users/${params.userId}`);
+
   try {
-    const params = await props.params
-    const currentUserId = await getUserIdFromSupabase(request);
-    if (!currentUserId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const targetUserId = params.userId;
 
-    // Security: Users can only delete their own account
-    if (currentUserId !== targetUserId) {
+    if (context.userId !== targetUserId) {
+      logResponse(context, 403, { attemptedUserId: targetUserId });
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Check if user exists
     const existingUser = await prisma.userProfile.findFirst({
       where: {
         id: targetUserId,
@@ -179,13 +216,18 @@ export async function DELETE(
     });
 
     if (!existingUser) {
+      logResponse(context, 404, { requestedUserId: targetUserId });
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Soft delete the user
     await prisma.userProfile.update({
       where: { id: targetUserId },
       data: { deleted_at: new Date() },
+    });
+
+    logResponse(context, 200, {
+      deletedUserId: targetUserId,
+      deletedUsername: existingUser.username || "no_username",
     });
 
     return NextResponse.json(
@@ -193,7 +235,10 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error(error);
+    logError(context, error as Error, {
+      operation: "delete_user_profile",
+      targetUserId: params.userId,
+    });
     return NextResponse.json(
       { error: "Failed to delete user" },
       { status: 500 }
