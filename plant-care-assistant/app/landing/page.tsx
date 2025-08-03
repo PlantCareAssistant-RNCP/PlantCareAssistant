@@ -3,14 +3,26 @@
 import Logo from "@components/common/Logo";
 import Link from "next/link";
 import Icon from "@components/common/Icon";
+import { useAuth } from "@providers/AuthProvider";
 
 export default function Homepage() {
+  const { user, signOut } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto px-4 py-6 pt-24 pb-28 space-y-6">
       {/* Logo centré */}
       <div className="flex justify-center">
         <Logo size={250} />
       </div>
+
       {/* Welcome text */}
       <div className="text-center space-y-1">
         <h1 className="text-2xl font-extrabold text-white">WELCOME</h1>
@@ -55,27 +67,37 @@ export default function Homepage() {
         </Link>
       </div>
 
-      {/* Auth buttons */}
       <div className="flex gap-4 mt-4">
-        <Link href="/login">
+        {!user ? (
+          <>
+            <Link href="/login">
+              <button
+                type="submit"
+                id="login"
+                data-testid="loginButtonTest"
+                className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit z-50"
+              >
+                Login
+              </button>
+            </Link>
+            <Link href="/register">
+              <button
+                type="submit"
+                id="register"
+                className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit z-50"
+              >
+                Register
+              </button>
+            </Link>
+          </>
+        ) : (
           <button
-            type="submit"
-            id="login"
-            data-testid="loginButtonTest"
-            className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit z-50"
+            onClick={handleLogout}
+            className="bg-red-600 text-white py-2 px-4 rounded-full mt-2 w-fit z-50 hover:bg-red-700 transition-colors"
           >
-            Login
+            Logout
           </button>
-        </Link>
-        <Link href="/register">
-          <button
-            type="submit"
-            id="register"
-            className="bg-[#0A9788] text-white py-2 px-4 rounded-full mt-2 w-fit z-50"
-          >
-            Register
-          </button>
-        </Link>
+        )}
       </div>
     </div>
   );

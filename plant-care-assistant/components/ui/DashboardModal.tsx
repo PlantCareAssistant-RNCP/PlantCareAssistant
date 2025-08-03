@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@providers/AuthProvider'
 
 interface DashboardModalProps {
   isOpen: boolean
@@ -12,12 +13,13 @@ interface DashboardModalProps {
 export default function DashboardModal({ isOpen, onClose, anchorRef }: DashboardModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState({ top: 0, left: 0 })
+  const { user, signOut } = useAuth()
 
   useEffect(() => {
     if (isOpen && anchorRef.current) {
       const rect = anchorRef.current.getBoundingClientRect()
       setPosition({
-        top: rect.bottom + 8, // 8px sous l’icône
+        top: rect.bottom + 8, // 8px sous l'icône
         left: rect.right - 256, // modale alignée par la droite (w-64 = 256px)
       })
     }
@@ -39,6 +41,15 @@ export default function DashboardModal({ isOpen, onClose, anchorRef }: Dashboard
     }
   }, [isOpen, onClose])
 
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      onClose()
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
+  }
+
   if (!isOpen) return null
 
   return (
@@ -50,12 +61,24 @@ export default function DashboardModal({ isOpen, onClose, anchorRef }: Dashboard
         onClick={(e) => e.stopPropagation()}
       >
         <nav className="flex flex-col gap-4">
-        <Link href="/login" id="login" className="text-lg font-semibold text-gray-900 text-left">
-            Login
-          </Link>
-          <Link href="/register" id="register" className="text-lg font-semibold text-gray-900 text-left">
-            Register
-          </Link>          
+          {!user ? (
+            <>
+              <Link href="/login" id="login" className="text-lg font-semibold text-gray-900 text-left">
+                Login
+              </Link>
+              <Link href="/register" id="register" className="text-lg font-semibold text-gray-900 text-left">
+                Register
+              </Link>
+            </>
+          ) : (
+            <button
+              onClick={handleLogout}
+              className="text-lg font-semibold text-red-600 text-left hover:text-red-800 transition-colors"
+            >
+              Logout
+            </button>
+          )}
+          
           <Link href="/dashboard" id="dashboard" className="text-lg font-semibold text-gray-900 text-left">
             Dashboard
           </Link>
