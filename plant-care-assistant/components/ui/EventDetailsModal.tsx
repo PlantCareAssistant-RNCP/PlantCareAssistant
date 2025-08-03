@@ -23,7 +23,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   selectedEvent,
   onEventDeleted,
 }) => {
-  const { session } = useAuth();
+  const { user } = useAuth();
   const modalRef = useRef<HTMLDivElement>(null);
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -64,7 +64,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
   // Handle actual deletion after confirmation
   const handleConfirmDelete = async () => {
-    if (!session?.access_token) {
+    if (!user) {
       setError("You must be logged in to delete events");
       return;
     }
@@ -76,7 +76,6 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
       const response = await fetch(`/api/events/${selectedEvent.id}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
           "Content-Type": "application/json",
         },
       });

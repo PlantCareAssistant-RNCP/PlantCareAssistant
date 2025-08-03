@@ -1,32 +1,38 @@
 import Image from "next/image";
 import Icon from "@components/common/Icon";
 import Link from "next/link";
-// eslint-disable-next-line
 import { redirect } from "next/navigation";
-// eslint-disable-next-line
 import { createServerSupabaseClient } from "../../lib/supabaseServer";
 
 export default async function DashboardPage() {
-  // @TODO UNCOMMENT THIS CODE WHEN YOU WANT TO PROTECT THE DASHBOARD ROUTE WITH AUTHENTICATION
-  /*
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient();
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (!session) {
-    redirect('/login')
+  if (error || !user) {
+    redirect("/login");
   }
-
-  const user = session.user
-  */
-
-  // eslint-disable-next-line
-  const user = { email: "fakeuser@example.com" }; // Simulated user data for demonstration purposes
 
   return (
     <div className="flex flex-col items-center px-4 pt-24 pb-6 bg-[#05131A] min-h-screen text-white">
+      {/* Authentication check and user info */}
+      <div className="mb-6 text-center">
+        <h1 className="text-2xl font-bold">
+          Welcome back,{" "}
+          {user.user_metadata?.full_name ||
+            user.email?.split("@")[0] ||
+            "Plant Parent"}
+          !
+        </h1>
+        <p className="text-gray-300 text-sm">{user.email}</p>
+        <p className="text-gray-400 text-xs mt-1">
+          Member since {new Date(user.created_at).toLocaleDateString()}
+        </p>
+      </div>
+
       {/* Profile picture */}
       <div className="w-64 h-64 bg-white rounded-xl overflow-hidden flex items-center justify-center mb-6">
         <Image

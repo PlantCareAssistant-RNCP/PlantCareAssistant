@@ -16,7 +16,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
   selectedDate,
   onEventCreated,
 }) => {
-  const { session } = useAuth();
+  const { user } = useAuth();
   const modalRef = useRef<HTMLDivElement>(null);
 
   const [title, setTitle] = useState("");
@@ -57,19 +57,17 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
   useEffect(() => {
     const fetchPlants = async () => {
-      if (!isOpen || !session?.access_token) return;
+      if (!isOpen || !user) return;
 
       try {
         setIsLoadingPlants(true);
         const response = await fetch("/api/plants", {
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
             "Content-Type": "application/json",
           },
         });
 
         if (!response.ok) {
-          // ✅ MINIMAL: Only log API failures
           logger.error("Plants fetch failed", {
             endpoint: "/api/plants",
             status: response.status,
@@ -89,7 +87,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     };
 
     fetchPlants();
-  }, [isOpen, session]);
+  }, [isOpen, user]); // FIX 3: Change dependency from session to user
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +97,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       return;
     }
 
-    if (!session?.access_token) {
+    if (!user) {
       setError("You must be logged in to create events");
       return;
     }
@@ -118,10 +116,9 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         plantId: plantId === "" ? null : plantId,
       };
 
-      const response = await fetch(`/api/users/${session.user?.id}/events`, {
+      const response = await fetch(`/api/users/${user.id}/events`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(eventData),
@@ -132,7 +129,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         onClose();
       } else {
         logger.error("Event creation failed", {
-          endpoint: `/api/users/${session.user?.id}/events`,
+          endpoint: `/api/users/${user.id}/events`,
           status: response.status,
           eventTitle: title.trim(),
           hasPlant: plantId !== "",
@@ -144,9 +141,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         );
       }
     } catch (err) {
-      // ✅ MINIMAL: Only network errors
       logger.error("Event creation network error", {
-        endpoint: `/api/users/${session.user?.id}/events`,
+        endpoint: `/api/users/${user.id}/events`,
         error: err instanceof Error ? err.message : "Unknown error",
         eventTitle: title.trim(),
       });
