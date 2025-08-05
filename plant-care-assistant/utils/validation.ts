@@ -133,20 +133,21 @@ export function validateDateRange(
       };
     }
 
-    const startDay = startDateTime.startOf("day");
-    const endDay = endDateTime.startOf("day");
-    const todayDay = nowDateTime.startOf("day");
 
-    if (startDay > endDay) {
+    if (startDateTime > endDateTime) {
       return {
         error: "Start time must be earlier than end time",
         status: 400,
       };
     }
 
+    const startDay = startDateTime.startOf("day");
+    const todayDay = nowDateTime.startOf("day");
+
     if (startDay < todayDay) {
       return { error: "Start time cannot be before today", status: 400 };
     }
+    
     return null;
   } catch (error) {
     logger.error("Date range validation error:", error);

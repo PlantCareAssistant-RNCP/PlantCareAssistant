@@ -21,6 +21,9 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
   const [title, setTitle] = useState("");
   const [plantId, setPlantId] = useState<number | "">("");
+  const [isAllDay, setIsAllDay] = useState(true);
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("10:00");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [plants, setPlants] = useState<
@@ -52,6 +55,9 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       setTitle("");
       setPlantId("");
       setError(null);
+      setIsAllDay(true);
+      setStartTime("09:00");
+      setEndTime("10:00");
     }
   }, [isOpen]);
 
@@ -96,6 +102,12 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       setError("Event title is required");
       return;
     }
+    if (!isAllDay) {
+      if (startTime >= endTime) {
+        setError("End time must be after start time");
+        return;
+      }
+    }
 
     if (!user) {
       setError("You must be logged in to create events");
@@ -106,8 +118,14 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       setIsSubmitting(true);
       setError(null);
 
-      const startDateTime = DateTime.fromJSDate(selectedDate);
-      const endDateTime = startDateTime.endOf("day");
+      const startDateTime = DateTime.fromJSDate(selectedDate).set({
+        hour: isAllDay ? 0 : Number(startTime.split(":")[0]),
+        minute: isAllDay ? 0 : Number(startTime.split(":")[1]),
+      });
+      const endDateTime = DateTime.fromJSDate(selectedDate).set({
+        hour: isAllDay ? 23 : Number(endTime.split(":")[0]),
+        minute: isAllDay ? 59 : Number(endTime.split(":")[1]),
+      });
 
       const eventData = {
         title: title.trim(),
@@ -174,6 +192,50 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           </div>
 
           <div>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Event Timing
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isAllDay}
+                  onChange={(e) => setIsAllDay(e.target.checked)}
+                  className="mr-2 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
+                <span className="text-sm text-gray-600">All day event</span>
+              </label>
+            </div>
+
+            {!isAllDay && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
             <label
               htmlFor="title"
               className="block text-sm font-medium text-gray-700 mb-1"
@@ -185,7 +247,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
               placeholder="e.g., Water plants, Fertilize roses"
               required
             />
@@ -209,7 +271,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     e.target.value === "" ? "" : Number(e.target.value)
                   )
                 }
-                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
               >
                 <option value="">No specific plant</option>
                 {plants.map((plant) => (
