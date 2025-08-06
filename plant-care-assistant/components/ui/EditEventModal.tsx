@@ -354,37 +354,36 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
             </label>
           </div>
 
-          {/* New section for recurring events */}
+          {/* Modified recurring options section */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               Repeat Options
             </label>
             
+            <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
+              <strong>Note:</strong> Recurring patterns cannot be changed for existing events. 
+              To modify recurring settings, please delete this event and create a new one with your desired pattern.
+            </div>
+            
             <div className="flex items-center space-x-4">
-              <label className="flex items-center">
+              <label className="flex items-center opacity-50">
                 <input
                   type="checkbox"
-                  checked={repeatWeekly}
-                  onChange={(e) => {
-                    setRepeatWeekly(e.target.checked);
-                    if (e.target.checked) setRepeatMonthly(false); // Only one at a time
-                  }}
+                  checked={false}
+                  disabled={true}  // Always disabled for editing
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-2"
                 />
-                <span className="text-sm text-gray-900">Repeat Weekly (52 weeks)</span>
+                <span className="text-sm text-gray-500">Repeat Weekly (52 weeks)</span>
               </label>
               
-              <label className="flex items-center">
+              <label className="flex items-center opacity-50">
                 <input
                   type="checkbox"
-                  checked={repeatMonthly}
-                  onChange={(e) => {
-                    setRepeatMonthly(e.target.checked);
-                    if (e.target.checked) setRepeatWeekly(false); // Only one at a time
-                  }}
+                  checked={false}
+                  disabled={true}  // Always disabled for editing
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-2"
                 />
-                <span className="text-sm text-gray-900">Repeat Monthly (12 months)</span>
+                <span className="text-sm text-gray-500">Repeat Monthly (12 months)</span>
               </label>
             </div>
           </div>
