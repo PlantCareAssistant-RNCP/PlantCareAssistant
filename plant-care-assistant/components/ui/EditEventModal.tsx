@@ -52,6 +52,10 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
   const [plants, setPlants] = useState<Plant[]>([]);
   const [isLoadingPlants, setIsLoadingPlants] = useState(false);
 
+  // Add recurring state
+  const [repeatWeekly, setRepeatWeekly] = useState(false);
+  const [repeatMonthly, setRepeatMonthly] = useState(false);
+
   useEffect(() => {
     if (isOpen && selectedEvent) {
       // Initialize form with current event data
@@ -81,6 +85,11 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
         setStartTime("09:00");
         setEndTime("10:00");
       }
+      
+      // Initialize recurring state - check if event is already recurring
+      // For now, default to false since we're keeping it simple
+      setRepeatWeekly(false);
+      setRepeatMonthly(false);
       
       setError(null);
     }
@@ -179,7 +188,9 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
         title: title.trim(),
         start: startDateTime.toISOString(),
         end: endDateTime.toISOString(),
-        plant_id: plantId || null,
+        plantId: plantId || null,  // Change from plant_id to plantId
+        repeatWeekly,
+        repeatMonthly,
       };
 
       logger.info("Updating event:", { eventId: selectedEvent.id, updateData });
@@ -341,6 +352,41 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
             >
               All-day event
             </label>
+          </div>
+
+          {/* New section for recurring events */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Repeat Options
+            </label>
+            
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={repeatWeekly}
+                  onChange={(e) => {
+                    setRepeatWeekly(e.target.checked);
+                    if (e.target.checked) setRepeatMonthly(false); // Only one at a time
+                  }}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-2"
+                />
+                <span className="text-sm text-gray-900">Repeat Weekly (52 weeks)</span>
+              </label>
+              
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={repeatMonthly}
+                  onChange={(e) => {
+                    setRepeatMonthly(e.target.checked);
+                    if (e.target.checked) setRepeatWeekly(false); // Only one at a time
+                  }}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-2"
+                />
+                <span className="text-sm text-gray-900">Repeat Monthly (12 months)</span>
+              </label>
+            </div>
           </div>
 
           {error && (

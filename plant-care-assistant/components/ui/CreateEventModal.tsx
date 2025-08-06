@@ -30,6 +30,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     Array<{ plant_id: number; plant_name: string }>
   >([]);
   const [isLoadingPlants, setIsLoadingPlants] = useState(false);
+  const [repeatWeekly, setRepeatWeekly] = useState(false);
+  const [repeatMonthly, setRepeatMonthly] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -132,6 +134,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         start: startDateTime.toISO(),
         end: endDateTime.toISO(),
         plantId: plantId === "" ? null : plantId,
+        repeatWeekly,
+        repeatMonthly,
       };
 
       const response = await fetch(`/api/users/${user.id}/events`, {
@@ -281,6 +285,40 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 ))}
               </select>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Repeat Options
+            </label>
+
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={repeatWeekly}
+                  onChange={(e) => {
+                    setRepeatWeekly(e.target.checked);
+                    if (e.target.checked) setRepeatMonthly(false); // Only one at a time
+                  }}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-2"
+                />
+                <span className="text-sm text-gray-900">Repeat Weekly (52 weeks)</span>
+              </label>
+
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={repeatMonthly}
+                  onChange={(e) => {
+                    setRepeatMonthly(e.target.checked);
+                    if (e.target.checked) setRepeatWeekly(false); // Only one at a time
+                  }}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-2"
+                />
+                <span className="text-sm text-gray-900">Repeat Monthly (12 months)</span>
+              </label>
+            </div>
           </div>
 
           {error && <div className="text-red-600 text-sm">{error}</div>}

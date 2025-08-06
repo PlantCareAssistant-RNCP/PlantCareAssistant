@@ -139,6 +139,85 @@ export async function PUT(
       data: validationResult,
     });
 
+    if (body.repeatWeekly) {
+      await prisma.event.deleteMany({
+        where: {
+          parentEventId: updatedEvent.id,
+          isRecurringInstance: true,
+        },
+      });
+
+      // Create new weekly instances
+      const instances = [];
+      let currentDate = new Date(updatedEvent.start);
+
+      for (let i = 1; i <= 52; i++) {
+        currentDate.setDate(currentDate.getDate() + 7);
+        const duration = updatedEvent.end
+          ? updatedEvent.end.getTime() - updatedEvent.start.getTime()
+          : 3600000;
+
+        instances.push({
+          title: updatedEvent.title,
+          start: new Date(currentDate),
+          end: new Date(currentDate.getTime() + duration),
+          userId: updatedEvent.userId,
+          plantId: updatedEvent.plantId,
+          parentEventId: updatedEvent.id,
+          isRecurringInstance: true,
+        });
+      }
+
+      if (instances.length > 0) {
+        await prisma.event.createMany({ data: instances });
+      }
+    }
+
+    if (body.repeatMonthly) {
+      // First, delete any existing recurring instances for this event
+      await prisma.event.deleteMany({
+        where: {
+          parentEventId: updatedEvent.id,
+          isRecurringInstance: true,
+        },
+      });
+
+      // Create new monthly instances
+      const instances = [];
+      let currentDate = new Date(updatedEvent.start);
+
+      for (let i = 1; i <= 12; i++) {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        const duration = updatedEvent.end
+          ? updatedEvent.end.getTime() - updatedEvent.start.getTime()
+          : 3600000;
+
+        instances.push({
+          title: updatedEvent.title,
+          start: new Date(currentDate),
+          end: new Date(currentDate.getTime() + duration),
+          userId: updatedEvent.userId,
+          plantId: updatedEvent.plantId,
+          parentEventId: updatedEvent.id,
+          isRecurringInstance: true,
+        });
+      }
+
+      if (instances.length > 0) {
+        await prisma.event.createMany({ data: instances });
+      }
+    }
+
+    // If neither repeatWeekly nor repeatMonthly, delete any existing instances
+    if (!body.repeatWeekly && !body.repeatMonthly) {
+      await prisma.event.deleteMany({
+        where: {
+          parentEventId: updatedEvent.id,
+          isRecurringInstance: true,
+        },
+      });
+    }
+
     logResponse(context, 200, {
       eventId: id,
       updatedFields: Object.keys(validationResult).join(", "),
@@ -202,11 +281,87 @@ export async function DELETE(
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
+    // Enhanced deletion logic for recurring events
+    if (existingEvent.isRecurringInstance) {
+      // If deleting a recurring instance, delete the entire series
+      const parentId = existingEvent.parentEventId;
+
+      // Delete all instances of this recurring event
+      const deletedInstances = await prisma.event.deleteMany({
+        where: {
+          parentEventId: parentId,
+          isRecurringInstance: true,
+        },
+      });
+
+      // Delete the master/parent event
+      if (parentId) {
+        await prisma.event.delete({ where: { id: parentId } });
+      }
+
+      logResponse(context, 200, {
+        deletedEventId: id,
+        deletedEventTitle: existingEvent.title,
+        deletionType: "recurring_series",
+        instancesDeleted: deletedInstances.count,
+        parentEventDeleted: !!parentId,
+      });
+
+      return NextResponse.json(
+        {
+          message: "Recurring event series deleted successfully",
+          instancesDeleted: deletedInstances.count + 1, // +1 for the master event
+        },
+        { status: 200 }
+      );
+    } else if (
+      existingEvent.parentEventId === null &&
+      !existingEvent.isRecurringInstance
+    ) {
+      // Check if this is a master recurring event (has children)
+      const childInstances = await prisma.event.findMany({
+        where: {
+          parentEventId: id,
+          isRecurringInstance: true,
+        },
+      });
+
+      if (childInstances.length > 0) {
+        // This is a master recurring event, delete all instances first
+        const deletedInstances = await prisma.event.deleteMany({
+          where: {
+            parentEventId: id,
+            isRecurringInstance: true,
+          },
+        });
+
+        // Then delete the master event
+        await prisma.event.delete({ where: { id } });
+
+        logResponse(context, 200, {
+          deletedEventId: id,
+          deletedEventTitle: existingEvent.title,
+          deletionType: "recurring_master",
+          instancesDeleted: deletedInstances.count,
+        });
+
+        return NextResponse.json(
+          {
+            message: "Recurring event series deleted successfully",
+            instancesDeleted: deletedInstances.count + 1, // +1 for the master event
+          },
+          { status: 200 }
+        );
+      }
+    }
+
+    // Regular single event deletion
     await prisma.event.delete({ where: { id } });
 
     logResponse(context, 200, {
       deletedEventId: id,
       deletedEventTitle: existingEvent.title,
+      deletionType: "single_event",
     });
 
     return NextResponse.json(
