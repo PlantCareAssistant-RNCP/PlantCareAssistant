@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "EVENT" ADD COLUMN     "isRecurringInstance" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "parentEventId" INTEGER;
+
+-- AddForeignKey
+ALTER TABLE "EVENT" ADD CONSTRAINT "EVENT_parentEventId_fkey" FOREIGN KEY ("parentEventId") REFERENCES "EVENT"("id") ON DELETE SET NULL ON UPDATE CASCADE;

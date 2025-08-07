@@ -32,7 +32,8 @@
     "pino": "^9.7.0",
     "react": "^19.0.0",
     "react-big-calendar": "^1.18.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-onesignal": "^3.2.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

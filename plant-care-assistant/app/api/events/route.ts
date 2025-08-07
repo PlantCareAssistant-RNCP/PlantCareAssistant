@@ -6,6 +6,7 @@ import {
   validationErrorResponse,
 } from "@utils/validation";
 import { createRequestContext, logRequest, logResponse, logError } from "@utils/apiLogger";
+import { scheduleEventNotification } from "@lib/onesignal";
 
 const prisma = new PrismaClient();
 
@@ -91,6 +92,35 @@ export async function POST(request: NextRequest) {
           : {}),
       },
     });
+
+    //Schedule Notification (30mins before start)
+    const notificationTime = new Date(event.start);
+    notificationTime.setMinutes(notificationTime.getMinutes()-30);
+
+    const notificationResponse = await scheduleEventNotification(
+      event.id,
+      event.title,
+      `Time for: ${event.title}`,
+      notificationTime
+    );
+
+    // Extract notificationId from response
+    const notificationId = notificationResponse?.notificationId;
+
+    // Save notificationId to event
+    if (notificationId) {
+      await prisma.event.update({
+        where: { id: event.id },
+        data: { notificationId }
+      });
+    }
+
+    logResponse(context, 201, {
+      eventId: event.id,
+      hasPlant: !!body.plantId,
+      eventTitle: body.title
+    });
+    return NextResponse.json(event, {status: 201})
 
     logResponse(context, 201, {
       eventId: event.id,

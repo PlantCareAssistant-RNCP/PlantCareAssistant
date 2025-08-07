@@ -133,6 +133,12 @@ model Event {
   plantId   Int?
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+  notificationId  String?
+  parentEventId   Int?      
+  isRecurringInstance Boolean @default(false) 
+
+  parentEvent   Event?   @relation("EventParent", fields: [parentEventId], references: [id])
+  childEvents   Event[]  @relation("EventParent")
 
   @@map("EVENT")
 }

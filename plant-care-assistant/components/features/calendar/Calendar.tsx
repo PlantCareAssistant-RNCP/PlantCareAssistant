@@ -126,6 +126,10 @@ const CalendarPage: React.FC = () => {
     fetchEvents();
   }, [fetchEvents]);
 
+  const handleEventUpdated = useCallback(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
   const { localizer, defaultDate, getNow } = useMemo(() => {
     Settings.defaultZone = timezone;
 
@@ -179,6 +183,7 @@ const CalendarPage: React.FC = () => {
           onClose={handleCloseDetailsModal}
           selectedEvent={selectedEvent}
           onEventDeleted={handleEventDeleted}
+          onEventUpdated={handleEventUpdated}
         />
       )}
     </div>

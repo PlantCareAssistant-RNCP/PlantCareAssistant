@@ -6,6 +6,7 @@ import {
   logResponse,
   logError,
 } from "@utils/apiLogger";
+import { scheduleEventNotification } from "@lib/onesignal";
 
 const prisma = new PrismaClient();
 
@@ -126,6 +127,16 @@ export async function POST(
         plantId: plantId,
       },
     });
+
+    const notificationTime = new Date(newEvent.start);
+    notificationTime.setMinutes(notificationTime.getMinutes() - 30);
+
+    await scheduleEventNotification(
+      newEvent.id,
+      newEvent.title,
+      `Time for: ${newEvent.title}`,
+      notificationTime
+    );
 
     logResponse(context, 201, {
       eventId: newEvent.id,
