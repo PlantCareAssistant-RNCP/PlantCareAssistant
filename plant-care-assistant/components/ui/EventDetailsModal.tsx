@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../providers/AuthProvider";
-import logger from "@utils/logger"
+import logger from "@utils/logger";
+import EditEventModal from "./EditEventModal";
 
 interface CalendarEvent {
   id: number;
@@ -15,6 +16,7 @@ interface EventDetailsModalProps {
   onClose: () => void;
   selectedEvent: CalendarEvent;
   onEventDeleted: () => void;
+  onEventUpdated: () => void;
 }
 
 const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
@@ -22,6 +24,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   onClose,
   selectedEvent,
   onEventDeleted,
+  onEventUpdated,
 }) => {
   const { user } = useAuth();
   const modalRef = useRef<HTMLDivElement>(null);
@@ -29,6 +32,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -54,6 +58,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
       setError(null);
       setShowConfirmation(false);
       setIsDeleting(false);
+      setIsEditModalOpen(false);
     }
   }, [isOpen]);
 
@@ -100,99 +105,160 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     setError(null);
   };
 
+  // Add these new handlers
+  const handleEditClick = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const handleEventUpdated = () => {
+    setIsEditModalOpen(false);
+    onEventUpdated();
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div
-        ref={modalRef}
-        className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl"
-      >
-        <h2 className="text-2xl font-bold text-green-700 mb-4">
-          Event Details
-        </h2>
+    <>
+      {/* Only show EventDetailsModal when edit modal is NOT open */}
+      {!isEditModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div
+            ref={modalRef}
+            className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl"
+          >
+            <h2 className="text-2xl font-bold text-green-700 mb-4">
+              Event Details
+            </h2>
 
-        {/* Event Information Display */}
-        <div className="space-y-3 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Title
-            </label>
-            <div className="p-2 bg-gray-100 rounded border text-gray-700">
-              {selectedEvent.title}
-            </div>
-          </div>
+            {/* Event Information Display */}
+            <div className="space-y-3 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Title
+                </label>
+                <div className="p-2 bg-gray-100 rounded border text-gray-700">
+                  {selectedEvent.title}
+                </div>
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date
-            </label>
-            <div className="p-2 bg-gray-100 rounded border text-gray-700">
-              {selectedEvent.start.toLocaleDateString()}
-            </div>
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date & Time
+                </label>
+                <div className="p-2 bg-gray-100 rounded border text-gray-700">
+                  {(() => {
+                    const startDate = new Date(selectedEvent.start);
+                    const endDate = new Date(
+                      selectedEvent.end || selectedEvent.start
+                    );
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Plant
-            </label>
-            <div className="p-2 bg-gray-100 rounded border text-gray-700">
-              {selectedEvent.plantId
-                ? `Plant ID: ${selectedEvent.plantId}`
-                : "No specific plant"}
+                    // Check if this is an all-day event
+                    const isAllDay =
+                      startDate.getHours() === 0 &&
+                      startDate.getMinutes() === 0 &&
+                      endDate.getHours() === 23 &&
+                      endDate.getMinutes() === 59;
+
+                    if (isAllDay) {
+                      return `${startDate.toLocaleDateString()} (All day)`;
+                    } else {
+                      const startTime = startDate.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
+                      const endTime = endDate.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
+                      return `${startDate.toLocaleDateString()} from ${startTime} to ${endTime}`;
+                    }
+                  })()}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Plant
+                </label>
+                <div className="p-2 bg-gray-100 rounded border text-gray-700">
+                  {selectedEvent.plantId
+                    ? `Plant ID: ${selectedEvent.plantId}`
+                    : "No specific plant"}
+                </div>
+              </div>
             </div>
+
+            {error && <div className="text-red-600 text-sm mb-4">{error}</div>}
+
+            {!showConfirmation ? (
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 text-gray-600 bg-gray-200 rounded hover:bg-gray-300"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEditClick}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Edit Event
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteClick}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Delete Event
+                </button>
+              </div>
+            ) : (
+              <div className="bg-red-50 border border-red-200 rounded p-4">
+                <p className="text-red-800 font-medium mb-3">
+                  Are you sure you want to delete this event?
+                </p>
+                <p className="text-red-600 text-sm mb-4">
+                  This action cannot be undone.
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={handleCancelDelete}
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-gray-600 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDelete}
+                    disabled={isDeleting}
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {isDeleting ? "Deleting..." : "Yes, Delete"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+      )}
 
-        {error && <div className="text-red-600 text-sm mb-4">{error}</div>}
-
-        {!showConfirmation ? (
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 bg-gray-200 rounded hover:bg-gray-300"
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              onClick={handleDeleteClick}
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Delete Event
-            </button>
-          </div>
-        ) : (
-          <div className="bg-red-50 border border-red-200 rounded p-4">
-            <p className="text-red-800 font-medium mb-3">
-              Are you sure you want to delete this event?
-            </p>
-            <p className="text-red-600 text-sm mb-4">
-              This action cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={handleCancelDelete}
-                disabled={isDeleting}
-                className="px-4 py-2 text-gray-600 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-              >
-                {isDeleting ? "Deleting..." : "Yes, Delete"}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      {/* EditEventModal renders independently */}
+      <EditEventModal
+        isOpen={isEditModalOpen}
+        onClose={handleEditModalClose}
+        selectedEvent={selectedEvent}
+        onEventUpdated={handleEventUpdated}
+      />
+    </>
   );
 };
 

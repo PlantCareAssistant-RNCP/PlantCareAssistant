@@ -183,11 +183,66 @@ export async function POST(
       },
     });
 
+    // Simple recurring logic - add after creating newEvent
+    if (body.repeatWeekly) {
+      const instances = [];
+      let currentDate = new Date(newEvent.start);
+
+      for (let i = 1; i <= 52; i++) {
+        // 52 weeks = 1 year
+        currentDate.setDate(currentDate.getDate() + 7);
+        const duration = newEvent.end
+          ? newEvent.end.getTime() - newEvent.start.getTime()
+          : 3600000; // 1 hour default
+
+        instances.push({
+          title: newEvent.title,
+          start: new Date(currentDate),
+          end: new Date(currentDate.getTime() + duration),
+          userId: newEvent.userId,
+          plantId: newEvent.plantId,
+          parentEventId: newEvent.id,
+          isRecurringInstance: true,
+        });
+      }
+
+      if (instances.length > 0) {
+        await prisma.event.createMany({ data: instances });
+      }
+    }
+
+    if (body.repeatMonthly) {
+      const instances = [];
+      let currentDate = new Date(newEvent.start);
+
+      for (let i = 1; i <= 12; i++) {
+        // 12 months = 1 year
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        const duration = newEvent.end
+          ? newEvent.end.getTime() - newEvent.start.getTime()
+          : 3600000;
+
+        instances.push({
+          title: newEvent.title,
+          start: new Date(currentDate),
+          end: new Date(currentDate.getTime() + duration),
+          userId: newEvent.userId,
+          plantId: newEvent.plantId,
+          parentEventId: newEvent.id,
+          isRecurringInstance: true,
+        });
+      }
+
+      if (instances.length > 0) {
+        await prisma.event.createMany({ data: instances });
+      }
+    }
+
     logResponse(context, 201, {
       eventId: newEvent.id,
       eventTitle: validationResult.title,
       hasPlant: !!validationResult.plantId,
-      plantId: validationResult.plantId ,
+      plantId: validationResult.plantId,
       targetUserId: targetUserId,
     });
 
