@@ -3,201 +3,160 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { dummyPlants } from "@components/features/myplants/MockPlant"; // Mock
+import Link from "next/link";
+import Icon from "@components/common/Icon";
+import { useAuth } from "@providers/AuthProvider";
 
-export default function EditPlant() {
+interface Plant {
+  plant_id: number;
+  plant_name: string;
+  photo: string;
+  created_at: string;
+  PLANT_TYPE?: {
+    plant_type_name: string;
+  };
+  Event: Array<{
+    id: number;
+    title: string;
+    start: string;
+  }>;
+}
+
+export default function PlantDetail() {
   const { id } = useParams();
   const router = useRouter();
+  const { isLoading: authLoading } = useAuth();
   const plantId = Array.isArray(id) ? id[0] : id;
 
-  const [plant, setPlant] = useState<any | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
+  const [plant, setPlant] = useState<Plant | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const selected = dummyPlants.find((p) => p.id === Number(plantId));
-    if (selected) {
-      setPlant(selected);
-      setTitle(selected.name);
-      setDescription(selected.description);
-      setImagePreview(selected.imageUrl);
-    }
-  }, [plantId]);
+    const fetchPlant = async () => {
+      if (!plantId || authLoading) return;
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+      try {
+        const response = await fetch(`/api/plants/${plantId}`, {
+          credentials: 'include',
+        });
 
-  const handleSave = () => {
-    console.log("✅ Updated plant:", { title, description, imagePreview });
-    setMessage("Plant updated successfully");
-  };
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError("Plant not found");
+          } else {
+            setError("Failed to load plant");
+          }
+          return;
+        }
 
-  const handleDelete = () => {
-    console.log("❌ Plant deleted:", plantId);
-    setMessage("Plant deleted");
-    setTimeout(() => {
-      router.push("/myplants");
-    }, 1500);
-  };
+        const plantData = await response.json();
+        setPlant(plantData);
+      } catch {
+        setError("Failed to load plant");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  useEffect(() => {
-    if (message) {
-      const timer = setTimeout(() => setMessage(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [message]);
+    fetchPlant();
+  }, [plantId, authLoading]);
 
-  if (!plant)
+  if (authLoading || loading) {
     return (
-      <p role="alert" className="text-white p-6">
-        Plant not found.
-      </p>
+      <div className="pt-20 px-6">
+        <div className="text-white text-center">Loading...</div>
+      </div>
     );
+  }
+
+  if (error || !plant) {
+    return (
+      <div className="pt-20 px-6">
+        <Link href="/myplants" className="fixed top-15 left-2 z-50 p-2 pt-20">
+          <Icon name="backIcon" size={50} />
+        </Link>
+        <div className="text-center">
+          <p className="text-red-400 mb-4">{error || "Plant not found"}</p>
+          <Link href="/myplants" className="text-[#0A9788] underline">
+            Back to My Plants
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <main
-      role="main"
-      aria-label="Edit plant form"
-      className="w-full flex justify-center px-4 pt-20 pb-10"
-    >
-      <section
-        className="w-full max-w-md bg-[#01121A] text-white rounded-lg p-6 space-y-6"
-        aria-labelledby="edit-plant-heading"
-      >
-        <h1 id="edit-plant-heading" className="text-lg font-semibold">
-          Edit your plant
-        </h1>
+    <div className="pt-20 px-6">
+      <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-start gap-6">
+        
+        <Link href="/myplants" className="fixed top-15 left-2 z-50 p-2 pt-20">
+          <Icon name="backIcon" size={50} />
+        </Link>
 
-        {message && (
-          <div
-            role="status"
-            aria-live="polite"
-            className="bg-green-600 text-white text-sm px-4 py-2 rounded-md"
-          >
-            {message}
-          </div>
-        )}
+        <div className="w-full max-w-md bg-[#01121A] text-white rounded-lg p-6 space-y-6">
+          <h1 className="text-lg font-semibold text-center">{plant.plant_name}</h1>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSave();
-          }}
-          className="space-y-4"
-          aria-describedby="edit-plant-description"
-        >
-          <p id="edit-plant-description" className="sr-only">
-            Use this form to update your plant’s name, description or image.
-          </p>
-
-          {/* Image preview */}
-          {imagePreview && (
-            <div
-              className="w-full h-48 relative rounded-md overflow-hidden bg-gray-800"
-              aria-label="Plant image preview"
-            >
+          {/* Plant Image */}
+          {plant.photo && (
+            <div className="w-full h-48 relative rounded-md overflow-hidden bg-gray-800">
               <Image
-                src={imagePreview}
-                alt={`Image of ${title}`}
+                src={plant.photo.startsWith('http') || plant.photo.startsWith('/') ? plant.photo : `/${plant.photo}`}
+                alt={plant.plant_name}
                 fill
                 className="object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/default-plant.jpg';
+                }}
               />
             </div>
           )}
 
-          {/* Upload image */}
-          <section aria-labelledby="plant-image-upload">
-            <h2 id="plant-image-upload" className="sr-only">
-              Upload or change plant image
-            </h2>
-            <label
-              htmlFor="image"
-              className="flex items-center justify-center w-full h-12 bg-[#0A9788] text-white font-semibold cursor-pointer rounded-full transition hover:opacity-90"
-              aria-label="Upload or change plant image"
-            >
-              {imagePreview ? "Change picture" : "Choose picture"}
-            </label>
-            <input
-              id="image"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageChange}
-            />
-          </section>
+          {/* Plant Details */}
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-300">Species</h3>
+              <p className="text-white">{plant.PLANT_TYPE?.plant_type_name || "Unknown"}</p>
+            </div>
 
-          {/* Title */}
-          <section aria-labelledby="plant-name-label">
-            <label
-              htmlFor="title"
-              id="plant-name-label"
-              className="block text-sm font-semibold mb-1"
-            >
-              Plant name
-            </label>
-            <input
-              id="title"
-              type="text"
-              className="w-full rounded-md bg-gray-300 text-black px-3 py-2"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter plant name"
-              aria-required="true"
-              aria-label="Plant name"
-            />
-          </section>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-300">Added</h3>
+              <p className="text-white">{new Date(plant.created_at).toLocaleDateString()}</p>
+            </div>
 
-          {/* Description */}
-          <section aria-labelledby="plant-desc-label">
-            <label
-              htmlFor="description"
-              id="plant-desc-label"
-              className="block text-sm font-semibold mb-1"
-            >
-              Plant description
-            </label>
-            <textarea
-              id="description"
-              rows={6}
-              className="w-full rounded-md bg-gray-300 text-black px-3 py-2 resize-none"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Write something..."
-              aria-label="Plant description"
-              aria-required="true"
-            />
-          </section>
+            {plant.Event && plant.Event.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-300">Recent Care Events</h3>
+                <div className="space-y-2">
+                  {plant.Event.slice(0, 3).map((event) => (
+                    <div key={event.id} className="bg-gray-800 p-2 rounded">
+                      <p className="text-sm text-white">{event.title}</p>
+                      <p className="text-xs text-gray-400">{new Date(event.start).toLocaleDateString()}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
-          {/* Action buttons */}
-          <div className="flex justify-between items-center pt-4">
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-4">
             <button
-              type="button"
-              onClick={handleDelete}
-              className="bg-[#B54747] hover:bg-red-700 text-white px-4 py-2 rounded-full transition"
-              aria-label="Delete this plant"
+              onClick={() => router.push(`/plants/${plant.plant_id}/edit`)}
+              className="flex-1 bg-[#0A9788] hover:bg-[#087a6e] text-white py-2 rounded-full transition-colors"
             >
-              Delete plant
+              Edit Plant
             </button>
             <button
-              type="submit"
-              className="bg-[#0A9788] hover:bg-teal-700 text-white px-6 py-2 rounded-full transition"
-              aria-label="Save changes to plant"
+              onClick={() => router.push(`/calendar?plant=${plant.plant_id}`)}
+              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-full transition-colors"
             >
-              Save
+              Add Care Event
             </button>
           </div>
-        </form>
-      </section>
-    </main>
+        </div>
+      </div>
+    </div>
   );
 }

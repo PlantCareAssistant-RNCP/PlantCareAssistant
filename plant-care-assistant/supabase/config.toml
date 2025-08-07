@@ -96,10 +96,15 @@ file_size_limit = "50MiB"
 
 # Uncomment to configure local storage buckets
 [storage.buckets.post-images]
-public = true
+public = false 
 file_size_limit = "5MiB"
 allowed_mime_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
-# objects_path = "./images"
+
+# Add plant-images bucket configuration
+[storage.buckets.plant-images]
+public = false
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/webp", "image/gif"]
 
 [auth]
 enabled = true
