@@ -17,41 +17,6 @@ A comprehensive application for plant enthusiasts to manage their plant collecti
 
 Plant Care Assistant is a Next.js application designed to help users manage their plants effectively. The application combines personal plant management with social networking features, allowing users to share their plant care journey with others. Additionally, it plans to incorporate plant identification capabilities to help users identify unknown plants.
 
-## Current State
-
-### Implemented Features
-
-- **Database Structure**
-  - Complete schema design for users, plants, events, posts, comments, and likes
-  - PostgreSQL database with Prisma ORM and Supabase integration
-  - Data seeding for development and testing
-
-- **Authentication System**
-  - Supabase authentication integration
-  - Protected routes and API endpoints
-  - User session management
-  - Security policies for data access control
-
-- **Calendar System**
-  - Complete API endpoints for CRUD operations on events
-  - Backend structure for managing plant care schedules
-  - Integration with user authentication
-
-- **User Management**
-  - User profile creation and editing
-  - API endpoints for user operations
-  - Data validation and error handling
-
-- **Basic UI Components**
-  - Landing page with login/registration functionality
-  - User authentication forms
-  - Dashboard, user profile, and feed page implementations
-
-- **Social Features (Partial Implementation)**
-  - Post creation and management API endpoints
-  - Image upload functionality for posts
-  - Basic post interaction backend structure
-
 ## Technology Stack
 
 - **Frontend**
