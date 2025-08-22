@@ -196,6 +196,7 @@ If you prefer to develop without Docker:
    ```
 
 3. **Start the development server:**
+
    ```bash
    npm run dev
    ```
