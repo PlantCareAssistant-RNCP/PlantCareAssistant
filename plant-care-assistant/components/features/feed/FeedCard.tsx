@@ -6,7 +6,7 @@ interface FeedCardProps {
   description: string;
   imageUrl: string;
   commentsCount: number;
-  date: string; // ✅ Ajout de la prop date
+  date: string; 
 }
 
 export default function FeedCard({

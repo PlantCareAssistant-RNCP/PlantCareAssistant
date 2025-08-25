@@ -155,72 +155,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let photoUrl = null;
-    if (imageFile) {
-      const imageValidationResult = validateImage(imageFile);
-      if (isValidationError(imageValidationResult)) {
-        logResponse(context, 400, {
-          validationError: imageValidationResult.error,
-          errorType: "image_validation",
-        });
-        return validationErrorResponse(imageValidationResult);
-      }
-      photoUrl = await uploadPostImage(imageFile, context.userId);
-      if (!photoUrl) {
-        logResponse(context, 500, {
-          errorType: "image_upload_failed",
-        });
-        return NextResponse.json(
-          { error: "Failed to upload image" },
-          { status: 500 }
-        );
-      }
+    const photoUrl = formData.get("photo") as string | null;
+    let finalPhotoUrl = null;
+    if (photoUrl && typeof photoUrl === "string" && photoUrl.startsWith("http")) {
+      finalPhotoUrl = photoUrl;
     }
 
-    // Create the post
     const newPost = await prisma.post.create({
       data: {
-        title: validPost.title,
+        user_id: context.userId,
+        plant_id: validPost.plant_id,
         content: validPost.content,
-        photo: photoUrl,
-        USER: {
-          connect: { id: context.userId }, // Use context.userId
-        },
-        PLANT: {
-          connect: { plant_id: validPost.plant_id },
-        },
-        created_at: new Date(),
-        updated_at: null,
-        deleted_at: null,
+        title: validPost.title,
+        photo: finalPhotoUrl, // Save the image URL here
       },
     });
 
-    await prisma.usersPost.create({
-      data: {
-        USER: {
-          connect: { id: context.userId }, // Use context.userId
-        },
-        POST: {
-          connect: { post_id: newPost.post_id },
-        },
-      },
-    });
-
-    logResponse(context, 201, {
-      postId: newPost.post_id ?? 0,
-      postTitle: validPost.title,
-      hasImage: !!photoUrl,
-      plantId: validPost.plant_id,
-    });
-
+    logResponse(context, 201, { postId: newPost.post_id });
     return NextResponse.json(newPost, { status: 201 });
-  } catch (error: unknown) {
-    logError(context, error as Error, {
-      operation: "create_post",
-    });
-    return NextResponse.json(
-      { error: "Failed to create post" },
-      { status: 500 }
-    );
+  } catch (error) {
+    logError(context, error as Error, { operation: "create_post" });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
