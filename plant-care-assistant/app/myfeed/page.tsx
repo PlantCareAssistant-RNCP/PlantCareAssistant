@@ -57,8 +57,7 @@ export default function MyFeed() {
                     imageUrl={post.photo}
                     description={post.content}
                     createdAt={post.created_at}
-                    authorId={post.USER?.id}
-                  />
+                    authorId={post.USER?.id} commentsCount={0}                  />
                 </Link>
               </li>
             ))}
