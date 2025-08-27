@@ -3,17 +3,26 @@
 import Link from "next/link";
 import Icon from "@components/common/Icon";
 import FeedCard from "@components/features/feed/FeedCard";
-import { dummyPosts } from "@components/features/feed/FeedList";
 import { useEffect, useState } from "react";
 
 export default function MyFeed() {
-  const [myPosts, setMyPosts] = useState<typeof dummyPosts>([]);
+  const [myPosts, setMyPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // 🧪 En prod, remplace par la vraie auth
-    const currentUsername = "John Doe";
-    const myPostsFiltered = dummyPosts.filter((post) => post.username === currentUsername);
-    setMyPosts(myPostsFiltered);
+    setLoading(true);
+    fetch("/api/social/posts")
+      .then(async (res) => {
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to fetch posts");
+        }
+        return res.json();
+      })
+      .then((data) => setMyPosts(data))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -25,23 +34,30 @@ export default function MyFeed() {
       <div className="pt-40 max-w-md mx-auto px-4 space-y-4">
         <h1 className="text-white text-lg font-semibold">My posts</h1>
 
-        {myPosts.length === 0 ? (
+        {loading ? (
+          <p className="text-gray-400 text-center mt-10" role="status">
+            Loading...
+          </p>
+        ) : error ? (
+          <p className="text-red-400 text-center mt-10" role="alert">
+            {error}
+          </p>
+        ) : myPosts.length === 0 ? (
           <p className="text-gray-400 text-center mt-10" role="status">
             You haven’t posted anything yet.
           </p>
         ) : (
           <ul aria-label="List of your posts" className="space-y-4">
             {myPosts.map((post) => (
-              <li key={post.id}>
-                <Link href={`/post/${post.id}`}>
+              <li key={post.post_id}>
+                <Link href={`/post/${post.post_id}`}>
                   <FeedCard
-                    id={post.id}
-                    author={post.username}
-                    imageUrl={post.imageUrl}
-                    description={post.description}
-                    createdAt={post.date}
-                    authorId={post.username}
-                  />
+                    id={post.post_id}
+                    author={post.USER?.username || "Unknown"}
+                    imageUrl={post.photo}
+                    description={post.content}
+                    createdAt={post.created_at}
+                    authorId={post.USER?.id} commentsCount={0}                  />
                 </Link>
               </li>
             ))}

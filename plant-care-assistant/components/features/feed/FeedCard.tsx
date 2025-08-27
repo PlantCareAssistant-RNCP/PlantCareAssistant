@@ -2,26 +2,29 @@ import Image from "next/image";
 import Icon from "@components/common/Icon";
 
 interface FeedCardProps {
-  username: string;
+  id: number;
+  author: string;
   description: string;
   imageUrl: string;
   commentsCount: number;
-  date: string; // ✅ Ajout de la prop date
+  createdAt: string; 
+  authorId: string;
 }
 
 export default function FeedCard({
-  username,
+  id,
+  author,
   description,
   imageUrl,
   commentsCount,
-  date,
+  createdAt,
 }: FeedCardProps) {
   return (
     <div className="bg-[#E8E8E8] text-black rounded-xl shadow-md overflow-hidden space-y-2 p-3">
       <div className="w-full h-48 rounded-md overflow-hidden relative">
         <Image
           src={imageUrl}
-          alt={`Post by ${username}`}
+          alt={`Post by ${author}`}
           fill
           className="object-cover"
         />
@@ -29,8 +32,8 @@ export default function FeedCard({
 
       {/* ✅ Username + Date */}
       <div className="flex justify-between items-center text-sm font-semibold">
-        <span>{username}</span>
-        <span className="text-xs text-black">{date}</span>
+        <span>{author}</span>
+        <span className="text-xs text-black">{createdAt}</span>
       </div>
 
       <p className="text-sm text-gray-600 line-clamp-2">{description}</p>

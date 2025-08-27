@@ -17,12 +17,18 @@ export async function uploadPostImage(file: File): Promise<string | null> {
     }
 
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('bucket', 'post-images');
+    formData.append("file", file);
+    formData.append("bucket", "post-images");
 
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      credentials: 'include',
+    // Use absolute URL if running on the server
+    const apiUrl =
+      process.env.NEXT_PUBLIC_SITE_URL // e.g. "http://localhost:3000"
+        ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/upload`
+        : "http://localhost:3000/api/upload"; // fallback for dev
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      credentials: "include",
       body: formData,
     });
 
@@ -33,14 +39,25 @@ export async function uploadPostImage(file: File): Promise<string | null> {
     }
 
     const { url } = await response.json();
-    logger.info("Post image uploaded successfully", { 
+    logger.info("Post image uploaded successfully", {
       fileSize: file.size,
       fileType: file.type,
-      bucket: 'post-images'
+      bucket: "post-images",
     });
     return url;
   } catch (error) {
-    logger.error("Error in uploadPostImage:", error);
+    // Print everything about the error
+    console.error("Error in uploadPostImage:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message, error.stack);
+    } else {
+      // Print the error as JSON if possible
+      try {
+        console.error("Error details (JSON):", JSON.stringify(error));
+      } catch {
+        console.error("Error details (raw):", error);
+      }
+    }
     return null;
   }
 }
@@ -60,12 +77,12 @@ export async function uploadPlantImage(file: File): Promise<string | null> {
     }
 
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('bucket', 'plant-images');
+    formData.append("file", file);
+    formData.append("bucket", "plant-images");
 
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      credentials: 'include',
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      credentials: "include",
       body: formData,
     });
 
@@ -76,10 +93,10 @@ export async function uploadPlantImage(file: File): Promise<string | null> {
     }
 
     const { url } = await response.json();
-    logger.info("Plant image uploaded successfully", { 
+    logger.info("Plant image uploaded successfully", {
       fileSize: file.size,
       fileType: file.type,
-      bucket: 'plant-images'
+      bucket: "plant-images",
     });
     return url;
   } catch (error) {
@@ -95,20 +112,20 @@ export async function uploadPlantImage(file: File): Promise<string | null> {
  */
 export async function deletePostImage(url: string): Promise<boolean> {
   try {
-    if (!url || !url.includes('/post-images/')) {
+    if (!url || !url.includes("/post-images/")) {
       logger.warn("Invalid post image URL for deletion", { url });
       return false;
     }
 
-    const response = await fetch('/api/upload', {
-      method: 'DELETE',
+    const response = await fetch("/api/upload", {
+      method: "DELETE",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      credentials: 'include',
-      body: JSON.stringify({ 
+      credentials: "include",
+      body: JSON.stringify({
         url: url,
-        bucket: 'post-images'
+        bucket: "post-images",
       }),
     });
 
@@ -133,20 +150,21 @@ export async function deletePostImage(url: string): Promise<boolean> {
  */
 export async function deletePlantImage(url: string): Promise<boolean> {
   try {
-    if (!url || !url.includes('/plant-images/')) {
+    if (!url || !url.includes("/plant-images/")) {
       logger.warn("Invalid plant image URL for deletion", { url });
       return false;
     }
 
-    const response = await fetch('/api/upload', { // Use unified endpoint
-      method: 'DELETE',
+    const response = await fetch("/api/upload", {
+      // Use unified endpoint
+      method: "DELETE",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      credentials: 'include',
-      body: JSON.stringify({ 
+      credentials: "include",
+      body: JSON.stringify({
         url: url,
-        bucket: 'plant-images'
+        bucket: "plant-images",
       }),
     });
 
