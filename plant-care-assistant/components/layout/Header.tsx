@@ -24,7 +24,7 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 w-full bg-[#0A1A24] px-4 py-3 flex justify-between items-center h-16 z-50">
-      <Link href={homeRoute}>
+      <Link href="/">
         <Icon name="home" size={35} />
       </Link>
 
