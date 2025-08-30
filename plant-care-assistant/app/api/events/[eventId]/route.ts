@@ -149,7 +149,7 @@ export async function PUT(
 
       // Create new weekly instances
       const instances = [];
-      let currentDate = new Date(updatedEvent.start);
+      const currentDate = new Date(updatedEvent.start);
 
       for (let i = 1; i <= 52; i++) {
         currentDate.setDate(currentDate.getDate() + 7);
@@ -184,7 +184,7 @@ export async function PUT(
 
       // Create new monthly instances
       const instances = [];
-      let currentDate = new Date(updatedEvent.start);
+      const currentDate = new Date(updatedEvent.start);
 
       for (let i = 1; i <= 12; i++) {
         currentDate.setMonth(currentDate.getMonth() + 1);

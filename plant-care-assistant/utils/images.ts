@@ -12,7 +12,10 @@ export async function uploadPostImage(file: File): Promise<string | null> {
     // Validate image before upload (following your validation patterns)
     const validationResult = validateImage(file);
     if (isValidationError(validationResult)) {
-      logger.error("Post image validation failed:", validationResult.error);
+      logger.error({
+        message: "Post image validation failed:",
+        error: validationResult.error,
+      });
       return null;
     }
 
@@ -21,10 +24,9 @@ export async function uploadPostImage(file: File): Promise<string | null> {
     formData.append("bucket", "post-images");
 
     // Use absolute URL if running on the server
-    const apiUrl =
-      process.env.NEXT_PUBLIC_SITE_URL // e.g. "http://localhost:3000"
-        ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/upload`
-        : "http://localhost:3000/api/upload"; // fallback for dev
+    const apiUrl = process.env.NEXT_PUBLIC_SITE_URL // e.g. "http://localhost:3000"
+      ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/upload`
+      : "http://localhost:3000/api/upload"; // fallback for dev
 
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -34,15 +36,19 @@ export async function uploadPostImage(file: File): Promise<string | null> {
 
     if (!response.ok) {
       const error = await response.json();
-      logger.error("Post upload failed:", error);
+      logger.error({
+        message: "Post upload failed:",
+        error: error,
+      });
       return null;
     }
 
     const { url } = await response.json();
-    logger.info("Post image uploaded successfully", {
+    logger.info({
       fileSize: file.size,
       fileType: file.type,
       bucket: "post-images",
+      message: "Post image uploaded successfully",
     });
     return url;
   } catch (error) {
@@ -72,7 +78,10 @@ export async function uploadPlantImage(file: File): Promise<string | null> {
     // Validate image before upload (following your validation patterns)
     const validationResult = validateImage(file);
     if (isValidationError(validationResult)) {
-      logger.error("Plant image validation failed:", validationResult.error);
+      logger.error({
+        message: "Plant image validation failed:",
+        error: validationResult.error,
+      });
       return null;
     }
 
@@ -88,19 +97,26 @@ export async function uploadPlantImage(file: File): Promise<string | null> {
 
     if (!response.ok) {
       const error = await response.json();
-      logger.error("Plant upload failed:", error);
+      logger.error({
+        message: "Plant upload failed:",
+        error: error,
+      });
       return null;
     }
 
     const { url } = await response.json();
-    logger.info("Plant image uploaded successfully", {
+    logger.info({
       fileSize: file.size,
       fileType: file.type,
       bucket: "plant-images",
+      message: "Plant image uploaded successfully",
     });
     return url;
   } catch (error) {
-    logger.error("Error in uploadPlantImage:", error);
+    logger.error({
+      message: "Error in uploadPlantImage:",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -113,7 +129,10 @@ export async function uploadPlantImage(file: File): Promise<string | null> {
 export async function deletePostImage(url: string): Promise<boolean> {
   try {
     if (!url || !url.includes("/post-images/")) {
-      logger.warn("Invalid post image URL for deletion", { url });
+      logger.warn({
+        url,
+        message: "Invalid post image URL for deletion",
+      });
       return false;
     }
 
@@ -130,15 +149,24 @@ export async function deletePostImage(url: string): Promise<boolean> {
     });
 
     if (response.ok) {
-      logger.info("Post image deleted successfully", { url });
+      logger.info({
+        url,
+        message: "Post image deleted successfully",
+      });
       return true;
     } else {
       const error = await response.json();
-      logger.error("Post image delete failed:", error);
+      logger.error({
+        message: "Post image delete failed:",
+        error: error,
+      });
       return false;
     }
   } catch (error) {
-    logger.error("Error in deletePostImage:", error);
+    logger.error({
+      message: "Error in deletePostImage:",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return false;
   }
 }
@@ -151,7 +179,10 @@ export async function deletePostImage(url: string): Promise<boolean> {
 export async function deletePlantImage(url: string): Promise<boolean> {
   try {
     if (!url || !url.includes("/plant-images/")) {
-      logger.warn("Invalid plant image URL for deletion", { url });
+      logger.warn({
+        url,
+        message: "Invalid plant image URL for deletion",
+      });
       return false;
     }
 
@@ -169,15 +200,24 @@ export async function deletePlantImage(url: string): Promise<boolean> {
     });
 
     if (response.ok) {
-      logger.info("Plant image deleted successfully", { url });
+      logger.info({
+        url,
+        message: "Plant image deleted successfully",
+      });
       return true;
     } else {
       const error = await response.json();
-      logger.error("Plant image delete failed:", error);
+      logger.error({
+        message: "Plant image delete failed:",
+        error: error,
+      });
       return false;
     }
   } catch (error) {
-    logger.error("Error in deletePlantImage:", error);
+    logger.error({
+      message: "Error in deletePlantImage:",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return false;
   }
 }

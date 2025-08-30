@@ -19,8 +19,8 @@ export interface EventInput extends BaseRecord {
   start?: unknown;
   end?: unknown;
   plantId?: unknown;
-  repeatWeekly?: unknown;    
-  repeatMonthly?: unknown;   
+  repeatWeekly?: unknown;
+  repeatMonthly?: unknown;
 }
 
 export interface PlantInput extends BaseRecord {
@@ -49,7 +49,7 @@ export interface ValidEvent {
   title: string;
   start: Date;
   end: Date;
-  plantId?: number; 
+  plantId?: number;
   repeatWeekly?: boolean;
   repeatMonthly?: boolean;
 }
@@ -136,7 +136,6 @@ export function validateDateRange(
       };
     }
 
-
     if (startDateTime > endDateTime) {
       return {
         error: "Start time must be earlier than end time",
@@ -150,10 +149,13 @@ export function validateDateRange(
     if (startDay < todayDay) {
       return { error: "Start time cannot be before today", status: 400 };
     }
-    
+
     return null;
   } catch (error) {
-    logger.error("Date range validation error:", error);
+    logger.error({
+      message: "Date range validation error:",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       error: "Invalid date format",
       status: 400,
@@ -209,7 +211,7 @@ export function validateEvent(body: EventInput): ValidationError | ValidEvent {
     if (typeof body.repeatMonthly !== "undefined") {
       if (typeof body.repeatMonthly !== "boolean") {
         return {
-          error: "repeatMonthly must be a boolean", 
+          error: "repeatMonthly must be a boolean",
           status: 400,
         };
       }
@@ -232,15 +234,19 @@ export function validateEvent(body: EventInput): ValidationError | ValidEvent {
           : typeof body.plantId === "string"
           ? parseInt(body.plantId)
           : undefined,
-          repeatWeekly: body.repeatWeekly,
-          repeatMonthly: body.repeatMonthly,
+      repeatWeekly: body.repeatWeekly,
+      repeatMonthly: body.repeatMonthly,
     };
   } catch (error) {
-    logger.error("Event validation error:", error);
-    logger.error("Problematic input:", {
+    logger.error({
+      message: "Event validation error:",
+      error: error instanceof Error ? error.message : String(error),
+    });
+    logger.error({
       title: body.title,
       start: body.start,
       end: body.end,
+      message: "Problematic input:",
     });
     return {
       error: "Invalid date format",
@@ -685,7 +691,10 @@ export function validatePartialEvent(
       }
       result.start = startDate;
     } catch (error) {
-      logger.error("Start date validation error:", error);
+      logger.error({
+        message: "Start date validation error:",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return { error: "Invalid start date format", status: 400 };
     }
   }
@@ -699,7 +708,10 @@ export function validatePartialEvent(
       }
       result.end = endDate;
     } catch (error) {
-      logger.error("End date validation error:", error);
+      logger.error({
+        message: "End date validation error:",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return { error: "Invalid end date format", status: 400 };
     }
   }
@@ -747,7 +759,7 @@ export function validatePartialEvent(
     result.repeatWeekly = body.repeatWeekly;
   }
 
-  // Validate repeatMonthly if provided  
+  // Validate repeatMonthly if provided
   if (body.repeatMonthly !== undefined) {
     if (typeof body.repeatMonthly !== "boolean") {
       return {

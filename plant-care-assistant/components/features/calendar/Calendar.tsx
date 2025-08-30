@@ -6,7 +6,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./styles/calendar.css";
 import CreateEventModal from "@components/ui/CreateEventModal";
 import EventDetailsModal from "@components/ui/EventDetailsModal";
-import logger from "@utils/logger"
+import logger from "@utils/logger";
 
 const defaultTZ = DateTime.local().zoneName;
 
@@ -21,9 +21,9 @@ interface CalendarEvent {
 interface ApiEventResponse {
   id: number;
   title: string;
-  start: string;        
-  end: string | null;   
-  plant_id?: number;    
+  start: string;
+  end: string | null;
+  plant_id?: number;
 }
 
 const CalendarPage: React.FC = () => {
@@ -43,10 +43,11 @@ const CalendarPage: React.FC = () => {
 
   // Function to fetch events from your API
   const fetchEvents = useCallback(async () => {
-    logger.info("User check:", {
+    logger.info({
       hasUser: !!user,
       userId: user?.id,
       userEmail: user?.email,
+      message: "User check",
     });
 
     if (!user) {
@@ -57,7 +58,6 @@ const CalendarPage: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-
 
       const response = await fetch("/api/events", {
         headers: {
@@ -75,24 +75,29 @@ const CalendarPage: React.FC = () => {
       const data = await response.json();
 
       // Luxon approach with timezone awareness
-      const transformedEvents: CalendarEvent[] = data.map((event: ApiEventResponse) => {
-        const startDateTime = DateTime.fromISO(event.start);
-        const endDateTime = event.end
-          ? DateTime.fromISO(event.end)
-          : startDateTime;
+      const transformedEvents: CalendarEvent[] = data.map(
+        (event: ApiEventResponse) => {
+          const startDateTime = DateTime.fromISO(event.start);
+          const endDateTime = event.end
+            ? DateTime.fromISO(event.end)
+            : startDateTime;
 
-        return {
-          id: event.id,
-          title: event.title,
-          start: startDateTime.toJSDate(),
-          end: endDateTime.toJSDate(),
-          plantId: event.plant_id,
-        };
-      });
+          return {
+            id: event.id,
+            title: event.title,
+            start: startDateTime.toJSDate(),
+            end: endDateTime.toJSDate(),
+            plantId: event.plant_id,
+          };
+        }
+      );
 
       setEvents(transformedEvents);
     } catch (err) {
-      logger.error("Error fetching events:", err);
+      logger.error({
+        err: err instanceof Error ? err.message : String(err),
+        message: "Error fetching events:",
+      });
       setError(err instanceof Error ? err.message : "Failed to fetch events");
     } finally {
       setIsLoading(false);
