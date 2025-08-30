@@ -37,10 +37,11 @@ export async function createServerClient() {
             // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
-            logger.warn("Unable to set cookies in Server Component", {
+            logger.warn({
               error: error instanceof Error ? error.message : String(error),
               cookiesCount: cookiesToSet.length,
               context: "supabase-server-client-alt",
+              message: "Unable to set cookies in Server Component",
             });
           }
         },

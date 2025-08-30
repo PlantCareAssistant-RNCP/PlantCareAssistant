@@ -1,18 +1,16 @@
-import { NextRequest, NextResponse } from "next/server"; // Update this line
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import {
   validatePost,
   isValidationError,
   validationErrorResponse,
-  validateImage,
 } from "@utils/validation";
-import { uploadPostImage } from "@utils/images";
 import {
   createRequestContext,
   logRequest,
   logResponse,
   logError,
-} from "@utils/apiLogger"; // Add this line
+} from "@utils/apiLogger";
 
 const prisma = new PrismaClient();
 
@@ -101,7 +99,6 @@ export async function GET(request: NextRequest) {
 
 // Create a new post
 export async function POST(request: NextRequest) {
-  // Changed from Request to NextRequest
   const context = createRequestContext(request, "/api/social/posts");
 
   try {
@@ -116,7 +113,6 @@ export async function POST(request: NextRequest) {
     const title = formData.get("title") as string;
     const content = formData.get("content") as string;
     const plantId = parseInt(formData.get("plant_id") as string);
-    const imageFile = formData.get("image") as File | null;
 
     const postData = {
       title,
@@ -139,7 +135,7 @@ export async function POST(request: NextRequest) {
     const plant = await prisma.plant.findFirst({
       where: {
         plant_id: validPost.plant_id,
-        user_id: context.userId, // Use context.userId instead of userId
+        user_id: context.userId,
         deleted_at: null,
       },
     });
@@ -155,6 +151,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Only accept a pre-uploaded image URL
     const photoUrl = formData.get("photo") as string | null;
     let finalPhotoUrl = null;
     if (photoUrl && typeof photoUrl === "string" && photoUrl.startsWith("http")) {
@@ -167,7 +164,7 @@ export async function POST(request: NextRequest) {
         plant_id: validPost.plant_id,
         content: validPost.content,
         title: validPost.title,
-        photo: finalPhotoUrl, // Save the image URL here
+        photo: finalPhotoUrl,
       },
     });
 

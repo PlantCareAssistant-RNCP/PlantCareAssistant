@@ -186,7 +186,7 @@ export async function POST(
     // Simple recurring logic - add after creating newEvent
     if (body.repeatWeekly) {
       const instances = [];
-      let currentDate = new Date(newEvent.start);
+      const currentDate = new Date(newEvent.start);
 
       for (let i = 1; i <= 52; i++) {
         // 52 weeks = 1 year
@@ -213,7 +213,7 @@ export async function POST(
 
     if (body.repeatMonthly) {
       const instances = [];
-      let currentDate = new Date(newEvent.start);
+      const currentDate = new Date(newEvent.start);
 
       for (let i = 1; i <= 12; i++) {
         // 12 months = 1 year

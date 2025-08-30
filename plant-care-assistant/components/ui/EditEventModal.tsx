@@ -19,9 +19,9 @@ interface EditEventModalProps {
 
 // Update the Plant interface to match your actual API response
 interface Plant {
-  plant_id: number;           
-  plant_name: string;         
-  PLANT_TYPE?: {              
+  plant_id: number;
+  plant_name: string;
+  PLANT_TYPE?: {
     plant_type_name: string;
   };
 }
@@ -39,11 +39,11 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [plantId, setPlantId] = useState<number | undefined>(undefined);
-  
+
   const [isAllDay, setIsAllDay] = useState(true);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
-  
+
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,22 +60,21 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
     if (isOpen && selectedEvent) {
       // Initialize form with current event data
       setTitle(selectedEvent.title);
-      const dateStr = selectedEvent.start.toISOString().split('T')[0];
+      const dateStr = selectedEvent.start.toISOString().split("T")[0];
       setDate(dateStr);
       setPlantId(selectedEvent.plantId);
-      
+
       const startDate = new Date(selectedEvent.start);
       const endDate = new Date(selectedEvent.end || selectedEvent.start);
-      
-      const isCurrentlyAllDay = (
-        startDate.getHours() === 0 && 
+
+      const isCurrentlyAllDay =
+        startDate.getHours() === 0 &&
         startDate.getMinutes() === 0 &&
-        endDate.getHours() === 23 && 
-        endDate.getMinutes() === 59
-      );
-      
+        endDate.getHours() === 23 &&
+        endDate.getMinutes() === 59;
+
       setIsAllDay(isCurrentlyAllDay);
-      
+
       if (!isCurrentlyAllDay) {
         const startTimeStr = startDate.toTimeString().slice(0, 5); // "HH:MM"
         const endTimeStr = endDate.toTimeString().slice(0, 5); // "HH:MM"
@@ -85,12 +84,12 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
         setStartTime("09:00");
         setEndTime("10:00");
       }
-      
+
       // Initialize recurring state - check if event is already recurring
       // For now, default to false since we're keeping it simple
       setRepeatWeekly(false);
       setRepeatMonthly(false);
-      
+
       setError(null);
     }
   }, [isOpen, selectedEvent]);
@@ -119,7 +118,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
   useEffect(() => {
     const fetchPlants = async () => {
       if (!user) return;
-      
+
       try {
         setIsLoadingPlants(true);
         const response = await fetch("/api/plants");
@@ -128,7 +127,11 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
           setPlants(plantsData);
         }
       } catch (err) {
-        logger.error("Error fetching plants:", err);
+        logger.error({
+          error: err instanceof Error ? err.message : "Unknown error",
+          endpoint: "/api/plants",
+          message: "Error fetching plants",
+        });
       } finally {
         setIsLoadingPlants(false);
       }
@@ -164,22 +167,22 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
       }
     }
 
+    // Move these outside the try block
+    const baseDate = new Date(date);
+    const startDateTime = new Date(baseDate);
+    const endDateTime = new Date(baseDate);
+
     try {
       setIsLoading(true);
       setError(null);
-
-      // Create DateTime objects with proper time handling
-      const baseDate = new Date(date);
-      const startDateTime = new Date(baseDate);
-      const endDateTime = new Date(baseDate);
 
       if (isAllDay) {
         startDateTime.setHours(0, 0, 0, 0);
         endDateTime.setHours(23, 59, 59, 999);
       } else {
-        const [startHour, startMinute] = startTime.split(':').map(Number);
-        const [endHour, endMinute] = endTime.split(':').map(Number);
-        
+        const [startHour, startMinute] = startTime.split(":").map(Number);
+        const [endHour, endMinute] = endTime.split(":").map(Number);
+
         startDateTime.setHours(startHour, startMinute, 0, 0);
         endDateTime.setHours(endHour, endMinute, 0, 0);
       }
@@ -188,12 +191,16 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
         title: title.trim(),
         start: startDateTime.toISOString(),
         end: endDateTime.toISOString(),
-        plantId: plantId || null,  // Change from plant_id to plantId
+        plantId: plantId || null,
         repeatWeekly,
         repeatMonthly,
       };
 
-      logger.info("Updating event:", { eventId: selectedEvent.id, updateData });
+      logger.info({
+        eventId: selectedEvent.id,
+        updateData,
+        message: "Updating event",
+      });
 
       const response = await fetch(`/api/events/${selectedEvent.id}`, {
         method: "PUT",
@@ -204,16 +211,35 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
       });
 
       if (response.ok) {
-        logger.info("Event updated successfully");
-        onEventUpdated(); // Trigger refresh in parent
-        onClose(); // Close the modal
+        logger.info({
+          message: "Event updated successfully",
+        });
+        onEventUpdated();
+        onClose();
       } else {
         const errorData = await response.json();
         setError(errorData.message || "Failed to update event");
-        logger.error("API error updating event:", errorData);
+        logger.error({
+          error: errorData.message || "Failed to update event",
+          eventId: selectedEvent.id,
+          updateData,
+          message: "API error updating event",
+        });
       }
     } catch (err) {
-      logger.error("Error updating event:", err);
+      logger.error({
+        error: err instanceof Error ? err.message : "Unknown error",
+        eventId: selectedEvent.id,
+        updateData: {
+          title: title.trim(),
+          start: startDateTime.toISOString(),
+          end: endDateTime.toISOString(),
+          plantId: plantId || null,
+          repeatWeekly,
+          repeatMonthly,
+        },
+        message: "Error updating event",
+      });
       setError("Failed to update event. Please try again.");
     } finally {
       setIsLoading(false);
@@ -228,9 +254,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
         ref={modalRef}
         className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl"
       >
-        <h2 className="text-2xl font-bold text-green-700 mb-4">
-          Edit Event
-        </h2>
+        <h2 className="text-2xl font-bold text-green-700 mb-4">Edit Event</h2>
 
         {/* Add the form here */}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -280,7 +304,9 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
               id="plantId"
               value={plantId || ""}
               onChange={(e) =>
-                setPlantId(e.target.value ? parseInt(e.target.value) : undefined)
+                setPlantId(
+                  e.target.value ? parseInt(e.target.value) : undefined
+                )
               }
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-white"
             >
@@ -290,7 +316,10 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
               ) : (
                 plants.map((plant) => (
                   <option key={plant.plant_id} value={plant.plant_id}>
-                    {plant.plant_name} {plant.PLANT_TYPE ? `(${plant.PLANT_TYPE.plant_type_name})` : ''}
+                    {plant.plant_name}{" "}
+                    {plant.PLANT_TYPE
+                      ? `(${plant.PLANT_TYPE.plant_type_name})`
+                      : ""}
                   </option>
                 ))
               )}
@@ -359,31 +388,36 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
             <label className="block text-sm font-medium text-gray-700">
               Repeat Options
             </label>
-            
+
             <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
-              <strong>Note:</strong> Recurring patterns cannot be changed for existing events. 
-              To modify recurring settings, please delete this event and create a new one with your desired pattern.
+              <strong>Note:</strong> Recurring patterns cannot be changed for
+              existing events. To modify recurring settings, please delete this
+              event and create a new one with your desired pattern.
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <label className="flex items-center opacity-50">
                 <input
                   type="checkbox"
                   checked={false}
-                  disabled={true}  // Always disabled for editing
+                  disabled={true} // Always disabled for editing
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-2"
                 />
-                <span className="text-sm text-gray-500">Repeat Weekly (52 weeks)</span>
+                <span className="text-sm text-gray-500">
+                  Repeat Weekly (52 weeks)
+                </span>
               </label>
-              
+
               <label className="flex items-center opacity-50">
                 <input
                   type="checkbox"
                   checked={false}
-                  disabled={true}  // Always disabled for editing
+                  disabled={true} // Always disabled for editing
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-2"
                 />
-                <span className="text-sm text-gray-500">Repeat Monthly (12 months)</span>
+                <span className="text-sm text-gray-500">
+                  Repeat Monthly (12 months)
+                </span>
               </label>
             </div>
           </div>

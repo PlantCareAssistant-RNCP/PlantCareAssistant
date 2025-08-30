@@ -13,13 +13,15 @@ import {
 } from "@utils/apiLogger";
 
 // Service role client for uploads (bypasses RLS securely)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: { autoRefreshToken: false, persistSession: false },
-  }
-);
+function createSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: { autoRefreshToken: false, persistSession: false },
+    }
+  );
+}
 
 export async function POST(request: NextRequest) {
   const context = createRequestContext(request, "/api/upload");
@@ -76,6 +78,7 @@ export async function POST(request: NextRequest) {
     const fileName = `${context.userId}-${Date.now()}.${fileExt}`;
     const filePath = `${context.userId}/${fileName}`;
 
+    const supabase = createSupabaseClient();
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(filePath, file, {
@@ -161,6 +164,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete with service role
+    const supabase = createSupabaseClient();
     const { error } = await supabase.storage.from(bucket).remove([filePath]);
 
     if (error) {
