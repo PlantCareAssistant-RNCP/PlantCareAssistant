@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { DateTime } from "luxon";
+import logger from "@utils/logger";
 
 // Types for validation
 export type ValidationError = {
@@ -17,6 +19,8 @@ export interface EventInput extends BaseRecord {
   start?: unknown;
   end?: unknown;
   plantId?: unknown;
+  repeatWeekly?: unknown;    
+  repeatMonthly?: unknown;   
 }
 
 export interface PlantInput extends BaseRecord {
@@ -41,12 +45,13 @@ export interface CommentInput extends BaseRecord {
   content?: unknown;
 }
 
-// Validated output interfaces - what we expect after validation
 export interface ValidEvent {
   title: string;
   start: Date;
   end: Date;
-  plantId?: number; // Only truly optional fields remain optional
+  plantId?: number; 
+  repeatWeekly?: boolean;
+  repeatMonthly?: boolean;
 }
 
 export interface ValidPlant {
@@ -120,28 +125,35 @@ export function validateDateRange(
   end: Date
 ): ValidationError | null {
   try {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    start.setHours(0, 0, 0, 0);
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    const startDateTime = DateTime.fromJSDate(start);
+    const endDateTime = DateTime.fromJSDate(end);
+    const nowDateTime = DateTime.now();
+
+    if (!startDateTime.isValid || !endDateTime.isValid) {
       return {
         error: "Invalid date format",
         status: 400,
       };
     }
-    if (start >= end) {
+
+
+    if (startDateTime > endDateTime) {
       return {
         error: "Start time must be earlier than end time",
         status: 400,
       };
     }
 
-    if (start < now) {
+    const startDay = startDateTime.startOf("day");
+    const todayDay = nowDateTime.startOf("day");
+
+    if (startDay < todayDay) {
       return { error: "Start time cannot be before today", status: 400 };
     }
+    
     return null;
   } catch (error) {
-    console.error("Date range validation error:", error);
+    logger.error("Date range validation error:", error);
     return {
       error: "Invalid date format",
       status: 400,
@@ -171,16 +183,13 @@ export function validateId(id: string | number): number | ValidationError {
 
 // Event validator that returns either error or valid event
 export function validateEvent(body: EventInput): ValidationError | ValidEvent {
-  // Check required fields
   const requiredError = validateRequiredFields(body, ["title", "start", "end"]);
   if (requiredError) return requiredError;
 
-  // Type checking
   if (typeof body.title !== "string") {
     return { error: "Title must be a string", status: 400 };
   }
 
-  // Parse dates for validation
   try {
     const startDate = new Date(String(body.start));
     const endDate = new Date(String(body.end));
@@ -188,7 +197,31 @@ export function validateEvent(body: EventInput): ValidationError | ValidEvent {
     const dateError = validateDateRange(startDate, endDate);
     if (dateError) return dateError;
 
-    // If all validation passes, return a properly typed object
+    if (typeof body.repeatWeekly !== "undefined") {
+      if (typeof body.repeatWeekly !== "boolean") {
+        return {
+          error: "repeatWeekly must be a boolean",
+          status: 400,
+        };
+      }
+    }
+
+    if (typeof body.repeatMonthly !== "undefined") {
+      if (typeof body.repeatMonthly !== "boolean") {
+        return {
+          error: "repeatMonthly must be a boolean", 
+          status: 400,
+        };
+      }
+    }
+
+    if (body.repeatWeekly === true && body.repeatMonthly === true) {
+      return {
+        error: "Event cannot repeat both weekly and monthly",
+        status: 400,
+      };
+    }
+
     return {
       title: body.title,
       start: startDate,
@@ -199,10 +232,12 @@ export function validateEvent(body: EventInput): ValidationError | ValidEvent {
           : typeof body.plantId === "string"
           ? parseInt(body.plantId)
           : undefined,
+          repeatWeekly: body.repeatWeekly,
+          repeatMonthly: body.repeatMonthly,
     };
   } catch (error) {
-    console.error("Event validation error:", error);
-    console.error("Problematic input:", {
+    logger.error("Event validation error:", error);
+    logger.error("Problematic input:", {
       title: body.title,
       start: body.start,
       end: body.end,
@@ -641,7 +676,7 @@ export function validatePartialEvent(
     result.title = body.title;
   }
 
-  // Validate start date if provided
+  // Validate start if provided
   if (body.start !== undefined) {
     try {
       const startDate = new Date(String(body.start));
@@ -650,12 +685,12 @@ export function validatePartialEvent(
       }
       result.start = startDate;
     } catch (error) {
-      console.error("Start date validation error:", error);
+      logger.error("Start date validation error:", error);
       return { error: "Invalid start date format", status: 400 };
     }
   }
 
-  // Validate end date if provided
+  // Validate end if provided
   if (body.end !== undefined) {
     try {
       const endDate = new Date(String(body.end));
@@ -664,12 +699,12 @@ export function validatePartialEvent(
       }
       result.end = endDate;
     } catch (error) {
-      console.error("End date validation error:", error);
+      logger.error("End date validation error:", error);
       return { error: "Invalid end date format", status: 400 };
     }
   }
 
-  // Validate date range if both dates are provided
+  // Validate date range if both start and end are provided
   if (result.start && result.end) {
     const dateError = validateDateRange(result.start, result.end);
     if (dateError) return dateError;
@@ -699,6 +734,36 @@ export function validatePartialEvent(
 
       result.plantId = plantId;
     }
+  }
+
+  // Validate repeatWeekly if provided
+  if (body.repeatWeekly !== undefined) {
+    if (typeof body.repeatWeekly !== "boolean") {
+      return {
+        error: "repeatWeekly must be a boolean",
+        status: 400,
+      };
+    }
+    result.repeatWeekly = body.repeatWeekly;
+  }
+
+  // Validate repeatMonthly if provided  
+  if (body.repeatMonthly !== undefined) {
+    if (typeof body.repeatMonthly !== "boolean") {
+      return {
+        error: "repeatMonthly must be a boolean",
+        status: 400,
+      };
+    }
+    result.repeatMonthly = body.repeatMonthly;
+  }
+
+  // Check mutual exclusivity
+  if (result.repeatWeekly === true && result.repeatMonthly === true) {
+    return {
+      error: "Event cannot repeat both weekly and monthly",
+      status: 400,
+    };
   }
 
   return result;

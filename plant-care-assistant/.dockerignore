@@ -3,7 +3,7 @@ node_modules
 npm-debug.log
 package-lock.json
 
-# Ignore build files (Next.js specific build folder)
+# Ignore Next build files
 .next
 
 # Ignore environment variables
@@ -11,6 +11,7 @@ package-lock.json
 .env.local
 .env.development
 .env.production
+.env.docker
 
 # Ignore Git and editor files
 .git

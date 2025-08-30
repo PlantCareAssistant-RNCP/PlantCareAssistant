@@ -1,27 +1,41 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
-import { getUserIdFromSupabase } from "@utils/auth";
-import { 
-  validateEvent, 
-  isValidationError, 
-  validationErrorResponse 
+import {
+  validateEvent,
+  isValidationError,
+  validationErrorResponse,
 } from "@utils/validation";
+import {
+  createRequestContext,
+  logError,
+  logRequest,
+  logResponse,
+} from "@utils/apiLogger";
 
 const prisma = new PrismaClient();
 
 export async function GET(
-  request: Request,
-  { params }: { params: { userId: string } }
+  request: NextRequest,
+  props: { params: Promise<{ userId: string }> }
 ) {
+  const params = await props.params;
+  const context = createRequestContext(
+    request,
+    `/api/users/${params.userId}/events`
+  );
+
   try {
-    const currentUserId = await getUserIdFromSupabase(request);
-    if (!currentUserId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const targetUserId = params.userId;
 
-    if (currentUserId !== targetUserId) {
+    if (context.userId !== targetUserId) {
+      logResponse(context, 403, { attemptedUserId: targetUserId });
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -33,6 +47,7 @@ export async function GET(
     });
 
     if (!userExists) {
+      logResponse(context, 404, { requestedUserId: targetUserId });
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -68,9 +83,19 @@ export async function GET(
       },
     });
 
+    logResponse(context, 200, {
+      eventCount: events.length,
+      hasDateFilter: !!(startDate && endDate),
+      hasPlantFilter: !!plantId,
+      targetUserId: targetUserId,
+    });
+
     return NextResponse.json(events, { status: 200 });
   } catch (error: unknown) {
-    console.error(error);
+    logError(context, error as Error, {
+      operation: "fetch_user_events",
+      targetUserId: params.userId,
+    });
     return NextResponse.json(
       { error: "Failed to fetch user events" },
       { status: 500 }
@@ -79,18 +104,27 @@ export async function GET(
 }
 
 export async function POST(
-  request: Request,
-  { params }: { params: { userId: string } }
+  request: NextRequest,
+  props: { params: Promise<{ userId: string }> }
 ) {
+  const params = await props.params;
+  const context = createRequestContext(
+    request,
+    `/api/users/${params.userId}/events`
+  );
+
   try {
-    const currentUserId = await getUserIdFromSupabase(request);
-    if (!currentUserId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const targetUserId = params.userId;
 
-    if (currentUserId !== targetUserId) {
+    if (context.userId !== targetUserId) {
+      logResponse(context, 403, { attemptedUserId: targetUserId });
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -102,14 +136,19 @@ export async function POST(
     });
 
     if (!userExists) {
+      logResponse(context, 404, { requestedUserId: targetUserId });
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const body = await request.json();
 
     const validationResult = validateEvent(body);
-    
+
     if (isValidationError(validationResult)) {
+      logResponse(context, 400, {
+        validationError: validationResult.error,
+        errorType: "validation",
+      });
       return validationErrorResponse(validationResult);
     }
 
@@ -123,6 +162,10 @@ export async function POST(
       });
 
       if (!plantExists) {
+        logResponse(context, 404, {
+          plantId: validationResult.plantId,
+          errorType: "plant_not_found",
+        });
         return NextResponse.json(
           { error: "Selected plant not found or doesn't belong to this user" },
           { status: 404 }
@@ -135,18 +178,80 @@ export async function POST(
         title: validationResult.title,
         start: new Date(validationResult.start),
         end: validationResult.end ? new Date(validationResult.end) : null,
-        user: {
-          connect: { id: targetUserId }
-        },
-        plant: validationResult.plantId ? {
-          connect: { plant_id: validationResult.plantId }
-        } : undefined
+        userId: targetUserId,
+        plantId: validationResult.plantId || null,
       },
+    });
+
+    // Simple recurring logic - add after creating newEvent
+    if (body.repeatWeekly) {
+      const instances = [];
+      let currentDate = new Date(newEvent.start);
+
+      for (let i = 1; i <= 52; i++) {
+        // 52 weeks = 1 year
+        currentDate.setDate(currentDate.getDate() + 7);
+        const duration = newEvent.end
+          ? newEvent.end.getTime() - newEvent.start.getTime()
+          : 3600000; // 1 hour default
+
+        instances.push({
+          title: newEvent.title,
+          start: new Date(currentDate),
+          end: new Date(currentDate.getTime() + duration),
+          userId: newEvent.userId,
+          plantId: newEvent.plantId,
+          parentEventId: newEvent.id,
+          isRecurringInstance: true,
+        });
+      }
+
+      if (instances.length > 0) {
+        await prisma.event.createMany({ data: instances });
+      }
+    }
+
+    if (body.repeatMonthly) {
+      const instances = [];
+      let currentDate = new Date(newEvent.start);
+
+      for (let i = 1; i <= 12; i++) {
+        // 12 months = 1 year
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        const duration = newEvent.end
+          ? newEvent.end.getTime() - newEvent.start.getTime()
+          : 3600000;
+
+        instances.push({
+          title: newEvent.title,
+          start: new Date(currentDate),
+          end: new Date(currentDate.getTime() + duration),
+          userId: newEvent.userId,
+          plantId: newEvent.plantId,
+          parentEventId: newEvent.id,
+          isRecurringInstance: true,
+        });
+      }
+
+      if (instances.length > 0) {
+        await prisma.event.createMany({ data: instances });
+      }
+    }
+
+    logResponse(context, 201, {
+      eventId: newEvent.id,
+      eventTitle: validationResult.title,
+      hasPlant: !!validationResult.plantId,
+      plantId: validationResult.plantId,
+      targetUserId: targetUserId,
     });
 
     return NextResponse.json(newEvent, { status: 201 });
   } catch (error: unknown) {
-    console.error(error);
+    logError(context, error as Error, {
+      operation: "create_user_event",
+      targetUserId: params.userId,
+    });
     return NextResponse.json(
       { error: "Failed to create event" },
       { status: 500 }

@@ -1,38 +1,67 @@
 -- Migration file for post-images storage bucket policies
 
--- Check and drop existing policies to avoid conflicts
+-- Create post-images bucket if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM storage.buckets WHERE id = 'post-images') THEN
+        INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+        VALUES (
+            'post-images',
+            'post-images',
+            true,
+            10485760, -- 10MB limit
+            ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        );
+    END IF;
+END $$;
+
+-- Storage policies for post-images bucket
 DO $$
 BEGIN
     -- Drop existing policies if they exist
-    IF EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can upload their own post images') THEN
-        DROP POLICY "Users can upload their own post images" ON storage.objects;
-    END IF;
+    DROP POLICY IF EXISTS "Users can upload their own post images" ON storage.objects;
+    DROP POLICY IF EXISTS "Users can view all post images" ON storage.objects;
+    DROP POLICY IF EXISTS "Users can update their own post images" ON storage.objects;
+    DROP POLICY IF EXISTS "Users can delete their own post images" ON storage.objects;
     
-    IF EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can update/delete their own post images') THEN
-        DROP POLICY "Users can update/delete their own post images" ON storage.objects;
+    -- Create policy for uploading images
+    CREATE POLICY "Users can upload their own post images"
+    ON storage.objects
+    FOR INSERT
+    WITH CHECK (
+        bucket_id = 'post-images' 
+        AND auth.uid()::text = (storage.foldername(name))[1]
+    );
+
+    -- Create policy for viewing all images
+    CREATE POLICY "Users can view all post images"
+    ON storage.objects
+    FOR SELECT
+    USING (bucket_id = 'post-images');
+
+    -- Create policy for updating own images
+    CREATE POLICY "Users can update their own post images"
+    ON storage.objects
+    FOR UPDATE
+    USING (
+        bucket_id = 'post-images' 
+        AND auth.uid()::text = (storage.foldername(name))[1]
+    );
+
+    -- Create policy for deleting own images
+    CREATE POLICY "Users can delete their own post images"
+    ON storage.objects
+    FOR DELETE
+    USING (
+        bucket_id = 'post-images' 
+        AND auth.uid()::text = (storage.foldername(name))[1]
+    );
+END $$;
+
+-- Enable RLS on storage.objects if not already enabled
+DO $$
+BEGIN
+    IF NOT (SELECT relrowsecurity FROM pg_class WHERE relname = 'objects' AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'storage')) THEN
+        ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
     END IF;
-    
-    IF EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can view post images') THEN
-        DROP POLICY "Anyone can view post images" ON storage.objects;
-    END IF;
-END
-$$;
-
--- Create policies
-CREATE POLICY "Users can upload their own post images" 
-ON storage.objects 
-FOR INSERT 
-TO authenticated 
-WITH CHECK (bucket_id = 'post-images' AND auth.uid()::text = (storage.foldername(name))[1]);
-
-CREATE POLICY "Users can update/delete their own post images" 
-ON storage.objects 
-FOR UPDATE OR DELETE
-TO authenticated 
-USING (bucket_id = 'post-images' AND auth.uid()::text = (storage.foldername(name))[1]);
-
-CREATE POLICY "Anyone can view post images" 
-ON storage.objects 
-FOR SELECT
-TO public
-USING (bucket_id = 'post-images');
+END $$;

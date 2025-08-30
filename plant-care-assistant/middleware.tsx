@@ -1,34 +1,78 @@
-/* 
-@TODO UNCOMMENT THIS CODE WHEN YOU WANT TO PROTECT THE DASHBOARD ROUTE
-
-
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr'
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
 
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value)
+            response = NextResponse.next({
+              request: {
+                headers: request.headers,
+              },
+            })
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
+
+  // Check if user is authenticated
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  const isProtectedRoute = req.nextUrl.pathname.startsWith('/dashboard')
+  const protectedRoutes = [
+    '/dashboard',
+    '/profile',
+    '/userprofile',
+  ]
 
-  if (isProtectedRoute && !session) {
-    return NextResponse.redirect(new URL('/login', req.url))
+  const isProtectedRoute = protectedRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  )
+
+  if (isProtectedRoute && !user) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  return res
-}
+  const authRoutes = ['/login', '/register']
+  const isAuthRoute = authRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  )
 
-/* export const config = {
-  matcher: ['/dashboard/:path*'],
-}
- */
-
-export function middleware() {
-    // middleware désactivé temporairement
-    return
+  if (isAuthRoute && user) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
+
+  return response
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
+  ],
+}

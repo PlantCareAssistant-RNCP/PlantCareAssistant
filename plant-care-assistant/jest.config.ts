@@ -16,7 +16,7 @@ const config: Config = {
     "!**/*.d.ts",
     "!**/node_modules/**",
   ],
-  testMatch: ['**/__tests__/**/*.(spec|test).[jt]s?(x)'], // 👈 AJOUT ICI
+  testMatch: ['**/tests/unit/**/*.(spec|test).[jt]s?(x)'],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/app/$1",
     "^@components/(.*)$": "<rootDir>/components/$1",
@@ -24,13 +24,11 @@ const config: Config = {
     "^@utils/(.*)$": "<rootDir>/utils/$1",
     "^@api/(.*)$": "<rootDir>/app/api/$1",
     "^@icons/(.*)$": "<rootDir>/assets/icons/$1",
-    "\\.(jpg|jpeg|png|gif|svg|css|scss)$": "<rootDir>/__mocks__/fileMock.js",
+    "\\.(jpg|jpeg|png|gif|svg|css|scss)$": "<rootDir>/tests/mocks/fileMock.js",
   },
   testPathIgnorePatterns: [
     "<rootDir>/node_modules/",
     "<rootDir>/.next/",
-    "<rootDir>/tests/",
-    "<rootDir>/tests-examples/",
   ],
   transformIgnorePatterns: [
     "/node_modules/",

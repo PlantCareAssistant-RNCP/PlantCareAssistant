@@ -1,23 +1,36 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getUserIdFromSupabase } from "@utils/auth";
 import { uploadPostImage, deletePostImage } from "@utils/images";
 import {
   isValidationError,
   validateImage,
   validationErrorResponse,
 } from "@utils/validation";
+import {
+  createRequestContext,
+  logRequest,
+  logResponse,
+  logError,
+} from "@utils/apiLogger";
 
 const prisma = new PrismaClient();
 
 // Get a single post by ID
 export async function GET(
-  request: Request,
-  { params }: { params: { postId: string } }
+  request: NextRequest,
+  props: { params: Promise<{ postId: string }> }
 ) {
+  const params = await props.params;
+  const context = createRequestContext(
+    request,
+    `/api/social/posts/${params.postId}`
+  );
+
   try {
-    const userId = await getUserIdFromSupabase(request);
-    if (!userId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -68,11 +81,20 @@ export async function GET(
     });
 
     if (!post) {
+      logResponse(context, 404, { postId: postId });
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Add a flag for if the current user has liked the post
-    const isLiked = post.LIKES.some((like) => like.user_id === userId);
+    const isLiked = post.LIKES.some((like) => like.user_id === context.userId);
+
+    logResponse(context, 200, {
+      postId: postId,
+      postTitle: post.title,
+      commentCount: post.COMMENT.length,
+      likeCount: post.LIKES.length,
+      isLiked: isLiked,
+      hasPlant: !!post.PLANT,
+    });
 
     return NextResponse.json(
       {
@@ -82,7 +104,10 @@ export async function GET(
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error(error);
+    logError(context, error as Error, {
+      operation: "fetch_single_post",
+      postId: params.postId,
+    });
     return NextResponse.json(
       { error: "Failed to fetch post" },
       { status: 500 }
@@ -92,12 +117,20 @@ export async function GET(
 
 // Update a post
 export async function PUT(
-  request: Request,
-  { params }: { params: { postId: string } }
+  request: NextRequest,
+  props: { params: Promise<{ postId: string }> }
 ) {
+  const params = await props.params;
+  const context = createRequestContext(
+    request,
+    `/api/social/posts/${params.postId}`
+  );
+
   try {
-    const userId = await getUserIdFromSupabase(request);
-    if (!userId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -119,16 +152,16 @@ export async function PUT(
     if (title) updateData.title = title;
     if (content) updateData.content = content;
 
-    // Check if post exists and belongs to user
     const existingPost = await prisma.post.findFirst({
       where: {
         post_id: postId,
-        user_id: userId,
+        user_id: context.userId,
         deleted_at: null,
       },
     });
 
     if (!existingPost) {
+      logResponse(context, 404, { postId: postId });
       return NextResponse.json(
         { error: "Post not found or you don't have permission to edit it" },
         { status: 404 }
@@ -138,11 +171,16 @@ export async function PUT(
     if (imageFile) {
       const validationResult = validateImage(imageFile);
       if (isValidationError(validationResult)) {
+        logResponse(context, 400, {
+          validationError: validationResult.error,
+          errorType: "image_validation",
+        });
         return validationErrorResponse(validationResult);
       }
-      // Upload new image
-      const photoUrl = await uploadPostImage(imageFile, userId);
+
+      const photoUrl = await uploadPostImage(imageFile, context.userId);
       if (!photoUrl) {
+        logResponse(context, 500, { errorType: "image_upload_failed" });
         return NextResponse.json(
           { error: "Failed to upload image" },
           { status: 500 }
@@ -154,33 +192,42 @@ export async function PUT(
       }
       updateData.photo = photoUrl;
     } else if (removeImage) {
-      // Remove image if explicitly requested
       if (existingPost.photo) {
         await deletePostImage(existingPost.photo);
       }
       updateData.photo = null;
     }
 
-    // If no fields to update
     if (Object.keys(updateData).length === 0) {
+      logResponse(context, 400, { errorType: "no_fields_to_update" });
       return NextResponse.json(
         { error: "No valid fields to update" },
         { status: 400 }
       );
     }
 
-    // Add updated timestamp
     updateData.updated_at = new Date();
 
-    // Update the post
     const updatedPost = await prisma.post.update({
       where: { post_id: postId },
       data: updateData,
     });
 
+    logResponse(context, 200, {
+      postId: postId,
+      updatedFields: Object.keys(updateData)
+        .filter((key) => key !== "updated_at")
+        .join(", "),
+      hasNewImage: !!imageFile,
+      removedImage: removeImage,
+    });
+
     return NextResponse.json(updatedPost, { status: 200 });
   } catch (error: unknown) {
-    console.error(error);
+    logError(context, error as Error, {
+      operation: "update_post",
+      postId: params.postId,
+    });
     return NextResponse.json(
       { error: "Failed to update post" },
       { status: 500 }
@@ -190,27 +237,35 @@ export async function PUT(
 
 // Delete a post (soft delete)
 export async function DELETE(
-  request: Request,
-  { params }: { params: { postId: string } }
+  request: NextRequest,
+  props: { params: Promise<{ postId: string }> }
 ) {
+  const params = await props.params;
+  const context = createRequestContext(
+    request,
+    `/api/social/posts/${params.postId}`
+  );
+
   try {
-    const userId = await getUserIdFromSupabase(request);
-    if (!userId) {
+    await logRequest(context, request);
+
+    if (!context.userId) {
+      logResponse(context, 401);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const postId = parseInt(params.postId);
 
-    // Check if post exists and belongs to user
     const existingPost = await prisma.post.findFirst({
       where: {
         post_id: postId,
-        user_id: userId,
+        user_id: context.userId,
         deleted_at: null,
       },
     });
 
     if (!existingPost) {
+      logResponse(context, 404, { postId: postId });
       return NextResponse.json(
         { error: "Post not found or you don't have permission to delete it" },
         { status: 404 }
@@ -221,10 +276,15 @@ export async function DELETE(
       await deletePostImage(existingPost.photo);
     }
 
-    // Soft delete the post
     await prisma.post.update({
       where: { post_id: postId },
       data: { deleted_at: new Date() },
+    });
+
+    logResponse(context, 200, {
+      deletedPostId: postId,
+      deletedPostTitle: existingPost.title,
+      hadPhoto: !!existingPost.photo,
     });
 
     return NextResponse.json(
@@ -232,7 +292,10 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error(error);
+    logError(context, error as Error, {
+      operation: "delete_post",
+      postId: params.postId,
+    });
     return NextResponse.json(
       { error: "Failed to delete post" },
       { status: 500 }

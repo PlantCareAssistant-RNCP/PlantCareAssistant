@@ -1,13 +1,12 @@
-import { createClient as supabaseCreateClient } from "@supabase/supabase-js";
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from "@supabase/ssr";
 
-// For direct API access
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+// For client components
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
-export const supabase = supabaseCreateClient(supabaseUrl, supabaseAnonKey);
-
-// For client components 
-export const createClient = () => {
-  return createClientComponentClient();
-};
+// Alias for backwards compatibility
+export const getSupabaseClient = createClient;

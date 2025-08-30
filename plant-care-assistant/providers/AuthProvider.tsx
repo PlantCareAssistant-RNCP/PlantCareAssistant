@@ -7,18 +7,18 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { Session, User } from "@supabase/supabase-js";
+import { User } from "@supabase/supabase-js";
 import { createClient } from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import logger from "@utils/logger";
 
-type AuthContextType = {
+interface AuthContextType {
   user: User | null;
-  session: Session | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
-};
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -32,35 +32,56 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  const [supabaseClient, setSupabaseClient] = useState<ReturnType<
+    typeof createClient
+  > | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Check active session when component mounts
-    const getSession = async () => {
+    // Initialize Supabase client
+    try {
+      const client = createClient();
+      setSupabaseClient(client);
+    } catch (error) {
+      logger.error("Failed to initialize Supabase client:", error);
+      setIsLoading(false);
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!supabaseClient) return;
+
+    // Check active user when component mounts
+    const getUser = async () => {
       try {
         setIsLoading(true);
         const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
+          data: { user },
+          error,
+        } = await supabaseClient.auth.getUser();
+
+        if (error) {
+          logger.info("No active user session:", error.message);
+          setUser(null);
+        } else {
+          setUser(user);
+        }
       } catch (error) {
-        console.error("Error checking session:", error);
+        logger.error("Error checking user:", error);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
     };
 
-    getSession();
+    getUser();
 
     // Subscribe to auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    } = supabaseClient.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setIsLoading(false);
 
@@ -69,10 +90,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase, router]);
+  }, [supabaseClient, router]);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    if (!supabaseClient) {
+      throw new Error("Supabase client not initialized");
+    }
+    const { error } = await supabaseClient.auth.signInWithPassword({
       email,
       password,
     });
@@ -80,18 +104,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, username: string) => {
-    // 1. Create the auth user in Supabase
-    const { error, data } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
+    if (!supabaseClient) {
+      throw new Error("Supabase client not initialized");
+    }
 
-    // 2. Create the user profile in your database
-    if (data.user) {
-      try {
+    try {
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Create user profile in database
         const response = await fetch("/api/auth/create-user-profile", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id: data.user.id,
             username,
@@ -99,23 +128,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to create user profile");
+          throw new Error("Failed to create user profile");
         }
-      } catch (error) {
+      }
+    } catch (error) {
+      if (supabaseClient) {
         // If profile creation fails, try to clean up the auth user
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
         throw error;
       }
     }
   };
 
   const signOut = async () => {
+    if (!supabaseClient) {
+      throw new Error("Supabase client not initialized");
+    }
+
     // Call your API logout endpoint to handle server-side session cleanup
     await fetch("/api/auth/logout", { method: "POST" });
 
     // Then clear client-side session
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabaseClient.auth.signOut();
     if (error) throw error;
 
     // Redirect to landing page after logout
@@ -124,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, isLoading, signIn, signUp, signOut }}
+      value={{ user, isLoading, signIn, signUp, signOut }}
     >
       {children}
     </AuthContext.Provider>

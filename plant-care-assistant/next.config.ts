@@ -2,22 +2,26 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "bxtuwronwmegqodeyypd.supabase.co",
+        port: "",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
+  },
+
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
-      use: ['@svgr/webpack'],
+      use: ["@svgr/webpack"],
     });
     return config;
   },
-    experimental: {
-    serverComponentsExternalPackages: ['sharp'],
-  },
-    api: {
-    bodyParser: {
-      sizeLimit: '7mb', // Adjust based on your max file size (5MB + buffer)
-    },
-    responseLimit: '9mb', // Slightly higher than bodyParser limit
-  },
+  serverExternalPackages: ["sharp"],
 };
 
-module.exports = nextConfig;
+export default nextConfig;
