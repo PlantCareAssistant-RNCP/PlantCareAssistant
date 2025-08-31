@@ -66,10 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } = await supabaseClient.auth.getUser();
 
         if (error) {
-          logger.info({
-            message: "No active user session:",
-            error: error.message,
-          });
+          if (process.env.NODE_ENV === "development") {
+            logger.info({
+              message: "No active user session:",
+              error: error.message,
+            });
+          }
           setUser(null);
         } else {
           setUser(user);

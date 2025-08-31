@@ -12,16 +12,6 @@ export default function Header() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user, isLoading } = useAuth();
 
-  // DEBUG: Log auth state changes
-  logger.debug({
-    hasUser: !!user,
-    userId: user?.id,
-    userEmail: user?.email,
-    isLoading,
-    timestamp: new Date().toISOString(),
-    message: "Header Debug:",
-  });
-
   const homeRoute = isLoading ? "/" : user ? "/dashboard" : "/";
 
   return (

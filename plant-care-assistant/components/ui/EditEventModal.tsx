@@ -196,11 +196,13 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
         repeatMonthly,
       };
 
-      logger.info({
-        eventId: selectedEvent.id,
-        updateData,
-        message: "Updating event",
-      });
+      if (process.env.NODE_ENV === "development") {
+        logger.info({
+          eventId: selectedEvent.id,
+          updateData,
+          message: "Updating event",
+        });
+      }
 
       const response = await fetch(`/api/events/${selectedEvent.id}`, {
         method: "PUT",
@@ -211,9 +213,11 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
       });
 
       if (response.ok) {
-        logger.info({
-          message: "Event updated successfully",
-        });
+        if (process.env.NODE_ENV === "development") {
+          logger.info({
+            message: "Event updated successfully",
+          });
+        }
         onEventUpdated();
         onClose();
       } else {
