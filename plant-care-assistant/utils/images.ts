@@ -44,12 +44,14 @@ export async function uploadPostImage(file: File): Promise<string | null> {
     }
 
     const { url } = await response.json();
-    logger.info({
-      fileSize: file.size,
-      fileType: file.type,
-      bucket: "post-images",
-      message: "Post image uploaded successfully",
-    });
+    if (process.env.NODE_ENV === "development") {
+      logger.info({
+        fileSize: file.size,
+        fileType: file.type,
+        bucket: "post-images",
+        message: "Post image uploaded successfully",
+      });
+    }
     return url;
   } catch (error) {
     // Print everything about the error

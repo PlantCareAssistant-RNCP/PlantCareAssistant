@@ -43,12 +43,14 @@ const CalendarPage: React.FC = () => {
 
   // Function to fetch events from your API
   const fetchEvents = useCallback(async () => {
-    logger.info({
-      hasUser: !!user,
-      userId: user?.id,
-      userEmail: user?.email,
-      message: "User check",
-    });
+    if (process.env.NODE_ENV === "development") {
+      logger.info({
+        hasUser: !!user,
+        userId: user?.id,
+        userEmail: user?.email,
+        message: "User check",
+      });
+    }
 
     if (!user) {
       setIsLoading(false);
