@@ -265,8 +265,11 @@ export function validatePlant(body: PlantInput): ValidationError | ValidPlant {
   if (requiredError) return requiredError;
 
   // Type checking
-  if (typeof body.plant_name !== "string") {
-    return { error: "Plant name must be a string", status: 400 };
+  if (
+    typeof body.plant_name !== "string" ||
+    body.plant_name.trim().length === 0
+  ) {
+    return { error: "Plant name must be a non-empty string", status: 400 };
   }
 
   let plantTypeId: number;
@@ -372,7 +375,7 @@ export function validateUser(body: UserInput): ValidationError | ValidUser {
 }
 
 // Post validator
-export function validatePost(body: PostInput): ValidationError | ValidPost {
+export function validatePost(body: any): ValidationError | ValidPost {
   const requiredError = validateRequiredFields(body, [
     "title",
     "content",
@@ -380,13 +383,20 @@ export function validatePost(body: PostInput): ValidationError | ValidPost {
   ]);
   if (requiredError) return requiredError;
 
-  // Type validation and conversion
-  if (typeof body.title !== "string") {
-    return { error: "Title must be a string", status: 400 };
+  // Title length check
+  if (typeof body.title !== "string" || body.title.trim().length === 0) {
+    return { error: "Title is required", status: 400 };
+  }
+  if (body.title.length > 100) {
+    return { error: "Title must be 100 characters or fewer", status: 400 };
   }
 
-  if (typeof body.content !== "string") {
-    return { error: "Content must be a string", status: 400 };
+  // Content length check
+  if (typeof body.content !== "string" || body.content.trim().length === 0) {
+    return { error: "Content is required", status: 400 };
+  }
+  if (body.content.length > 10000) {
+    return { error: "Content must be 10,000 characters or fewer", status: 400 };
   }
 
   let plantId: number;
@@ -425,6 +435,15 @@ export function validateComment(
 
   if (typeof body.content !== "string") {
     return { error: "Comment content must be a string", status: 400 };
+  }
+  if (body.content.length > 10000) {
+    return { error: "Content must be 10,000 characters or fewer", status: 400 };
+  }
+
+  if (body.photo !== undefined) {
+    if (body.photo !== null && typeof body.photo !== "string") {
+      return { error: "Photo must be a URL string or null", status: 400 };
+    }
   }
 
   return {
@@ -641,6 +660,9 @@ export function validatePartialPost(
     if (typeof body.title !== "string") {
       return { error: "Title must be a string", status: 400 };
     }
+    if (body.title.length > 100) {
+      return { error: "Title must be 100 characters or fewer", status: 400 };
+    }
     result.title = body.title;
   }
 
@@ -648,6 +670,9 @@ export function validatePartialPost(
   if (body.content !== undefined) {
     if (typeof body.content !== "string") {
       return { error: "Content must be a string", status: 400 };
+    }
+    if (body.content.length > 10000) {
+      return { error: "Content must be 10,000 characters or fewer", status: 400 };
     }
     result.content = body.content;
   }
