@@ -93,7 +93,10 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
         setError(errorData.message || "Failed to delete event");
       }
     } catch (err) {
-      logger.error("Error deleting event:", err);
+      logger.error({
+        error: err instanceof Error ? err.message : String(err),
+        message: "Error deleting event:",
+      });
       setError("Failed to delete event. Please try again.");
     } finally {
       setIsDeleting(false);

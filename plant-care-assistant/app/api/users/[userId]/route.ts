@@ -11,6 +11,7 @@ import {
   logResponse,
   logError,
 } from "@utils/apiLogger";
+import { createClient } from "@supabase/supabase-js";
 
 const prisma = new PrismaClient();
 
@@ -225,9 +226,24 @@ export async function DELETE(
       data: { deleted_at: new Date() },
     });
 
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY! 
+    );
+    const { error: supabaseError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
+
+    if (supabaseError) {
+      logError(context, supabaseError, { operation: "delete_supabase_user" });
+      return NextResponse.json(
+        { error: "User soft-deleted, but failed to delete from Supabase Auth", details: supabaseError.message },
+        { status: 500 }
+      );
+    }
+
     logResponse(context, 200, {
       deletedUserId: targetUserId,
       deletedUsername: existingUser.username || "no_username",
+      supabaseAuthDeleted: true,
     });
 
     return NextResponse.json(

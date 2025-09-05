@@ -5,8 +5,21 @@ import Icon from "@components/common/Icon";
 import FeedCard from "@components/features/feed/FeedCard";
 import { useEffect, useState } from "react";
 
+interface Post {
+  post_id: number;
+  USER?: {
+    username?: string;
+    id?: string;
+  };
+  photo: string;
+  content: string;
+  created_at: string;
+  COMMENT?: Comment[];
+  // add other fields as needed
+}
+
 export default function MyFeed() {
-  const [myPosts, setMyPosts] = useState<any[]>([]);
+  const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,11 +66,13 @@ export default function MyFeed() {
                 <Link href={`/post/${post.post_id}`}>
                   <FeedCard
                     id={post.post_id}
-                    author={post.USER?.username || "Unknown"}
-                    imageUrl={post.photo}
+                    authorId={post.USER?.id || ""}
+                    username={post.USER?.username || "Unknown"}
                     description={post.content}
-                    createdAt={post.created_at}
-                    authorId={post.USER?.id} commentsCount={0}                  />
+                    imageUrl={post.photo}
+                    commentsCount={post.COMMENT ? post.COMMENT.length : 0}
+                    date={post.created_at}
+                  />
                 </Link>
               </li>
             ))}
