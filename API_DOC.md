@@ -63,6 +63,12 @@ DELETE /api/events/:eventId
 GET /api/users/:userId/events
 ```
 
+### Get Events for a specific plant
+
+```
+GET /api/plants/:plantId/events
+```
+
 ## Plants API
 
 ### Get all plants for current user
@@ -99,6 +105,12 @@ DELETE /api/plants/:plantId
 
 ```
 GET /api/users/:userId/plants
+```
+
+### Get events for a specific plant
+
+```
+GET /api/plants/:plantId/events
 ```
 
 ## Plant Types API
@@ -166,13 +178,13 @@ POST /api/social/posts/:postId/comments Content-Type: application/json Body: { c
 #### Update a comment
 
 ```
-PUT /api/social/comments/:commentId Content-Type: application/json Body: { content: string }
+PUT /api/social/posts/:postId/comments/:commentId Content-Type: application/json Body: { content: string }
 ```
 
 #### Delete a comment
 
 ```
-DELETE /api/social/comments/:commentId
+DELETE /api/social/posts/:postId/comments/:commentId
 ```
 
 ### Likes
@@ -214,7 +226,7 @@ POST /api/users Content-Type: application/json Body: { username: string, email: 
 ### Get current user profile
 
 ```
-GET /api/users/me
+GET /api/auth/me
 ```
 
 ### Get a specific user profile
@@ -233,6 +245,20 @@ PUT /api/users/:userId Content-Type: multipart/form-data FormData: { username?: 
 
 ```
 DELETE /api/users/:userId
+```
+
+## Authentication API
+
+### Logout current user
+
+```
+POST /api/auth/logout
+```
+
+### Create user profile
+
+```
+POST /api/auth/create-user-profile Content-Type: application/json Body: { username: string, bio?: string, avatar?: File }
 ```
 
 ## Upload API
