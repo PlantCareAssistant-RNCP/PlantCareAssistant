@@ -5,7 +5,6 @@ import Link from "next/link";
 import Logo from "@components/common/Logo";
 import { useAuth } from "../../providers/AuthProvider";
 import { useRouter } from "next/navigation";
-import logger from "@utils/logger";
 
 export default function RegisterForm() {
   const [form, setForm] = useState({
