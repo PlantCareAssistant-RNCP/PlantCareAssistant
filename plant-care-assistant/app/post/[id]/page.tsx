@@ -6,6 +6,7 @@ import Link from "next/link";
 import Icon from "@components/common/Icon";
 import { useAuth } from "providers/AuthProvider";
 import { useEffect, useState } from "react";
+import AddCommentInput from "@components/forms/AddCommentInput";
 
 type Comment = {
   id: number;
@@ -35,6 +36,9 @@ export default function PostPage() {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [commentContent, setCommentContent] = useState("");
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [commentLoading, setCommentLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -70,6 +74,58 @@ export default function PostPage() {
   }, [postId]);
 
   const isOwner = post?.authorId === currentUser?.id;
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCommentError(null);
+
+    if (!commentContent.trim()) {
+      setCommentError("Comment cannot be empty.");
+      return;
+    }
+
+    if (!currentUser) {
+      setCommentError("You must be logged in to comment.");
+      return;
+    }
+
+    setCommentLoading(true);
+    try {
+      const res = await fetch(`/api/social/posts/${postId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: commentContent }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to add comment");
+      }
+      setCommentContent("");
+      // Refresh comments by refetching the post
+      const updatedPostRes = await fetch(`/api/social/posts/${postId}`);
+      const updatedPostData = await updatedPostRes.json();
+      setPost({
+        id: updatedPostData.post_id,
+        authorId: updatedPostData.USER?.id ?? "",
+        username: updatedPostData.USER?.username ?? "Unknown",
+        description: updatedPostData.content,
+        imageUrl: updatedPostData.photo,
+        commentsCount: updatedPostData.COMMENT ? updatedPostData.COMMENT.length : 0,
+        date: updatedPostData.created_at,
+        comments: (updatedPostData.COMMENT ?? []).map((c: any) => ({
+          id: c.comment_id,
+          username: c.USER?.username ?? "Anonymous",
+          date: c.created_at ? new Date(c.created_at).toLocaleDateString() : "",
+          time: c.created_at ? new Date(c.created_at).toLocaleTimeString() : "",
+          text: c.content,
+        })),
+      });
+    } catch (err: any) {
+      setCommentError(err.message);
+    } finally {
+      setCommentLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -155,20 +211,30 @@ export default function PostPage() {
 
       {/* Champ de commentaire */}
       <div className="fixed bottom-4 left-4 right-4 pb-10">
-        <form className="flex items-center bg-white rounded-full px-4 py-2 gap-2 border border-gray-400 shadow-md">
-          <input
-            type="text"
-            placeholder="Write a comment here..."
-            aria-label="Write a comment here"
-            className="flex-grow bg-transparent text-sm placeholder-gray-600 text-black outline-none"
-          />
-          <button
-            type="submit"
-            className="p-2 rounded-full min-w-[40px] min-h-[40px]"
-          >
-            <Icon name="sendIcon" size={24} />
-          </button>
-        </form>
+        <AddCommentInput
+          postId={post.id}
+          onCommentAdded={async () => {
+            // Refresh comments by refetching the post
+            const updatedPostRes = await fetch(`/api/social/posts/${postId}`);
+            const updatedPostData = await updatedPostRes.json();
+            setPost({
+              id: updatedPostData.post_id,
+              authorId: updatedPostData.USER?.id ?? "",
+              username: updatedPostData.USER?.username ?? "Unknown",
+              description: updatedPostData.content,
+              imageUrl: updatedPostData.photo,
+              commentsCount: updatedPostData.COMMENT ? updatedPostData.COMMENT.length : 0,
+              date: updatedPostData.created_at,
+              comments: (updatedPostData.COMMENT ?? []).map((comment: any) => ({
+                id: comment.comment_id,
+                username: comment.USER?.username ?? "Anonymous",
+                date: comment.created_at ? new Date(comment.created_at).toLocaleDateString() : "",
+                time: comment.created_at ? new Date(comment.created_at).toLocaleTimeString() : "",
+                text: comment.content,
+              })),
+            });
+          }}
+        />
       </div>
     </div>
   );
