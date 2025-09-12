@@ -4,7 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import Icon from "@components/common/Icon";
-import { dummyPosts } from "@components/features/feed/FeedList";
+import { useAuth } from "providers/AuthProvider";
+import { useEffect, useState } from "react";
 
 type Comment = {
   id: number;
@@ -14,19 +15,74 @@ type Comment = {
   text: string;
 };
 
+type Post = {
+  id: number;
+  authorId: string;
+  username: string;
+  description: string;
+  imageUrl: string;
+  commentsCount: number;
+  date: string;
+  comments: Comment[];
+};
+
 export default function PostPage() {
   const params = useParams();
   const router = useRouter();
   const postId = Number(params.id);
-  const post = dummyPosts.find((p) => p.id === postId);
+  const { user: currentUser } = useAuth();
 
-  const currentUser = "John Doe";
-  const isOwner = post?.username === currentUser;
+  const [post, setPost] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!post) {
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/social/posts/${postId}`)
+      .then(async (res) => {
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to fetch post");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        // Map backend data to your frontend Post type if needed
+        setPost({
+          id: data.post_id,
+          authorId: data.USER?.id ?? "",
+          username: data.USER?.username ?? "Unknown",
+          description: data.content,
+          imageUrl: data.photo,
+          commentsCount: data.COMMENT ? data.COMMENT.length : 0,
+          date: data.created_at,
+          comments: (data.COMMENT ?? []).map((c: any) => ({
+            id: c.comment_id,
+            username: c.USER?.username ?? "Anonymous",
+            date: c.created_at ? new Date(c.created_at).toLocaleDateString() : "",
+            time: c.created_at ? new Date(c.created_at).toLocaleTimeString() : "",
+            text: c.content,
+          })),
+        });
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [postId]);
+
+  const isOwner = post?.authorId === currentUser?.id;
+
+  if (loading) {
     return (
       <main className="p-4">
-        <p className="text-red-500 font-semibold">Post not found.</p>
+        <p className="text-gray-500 font-semibold">Loading...</p>
+      </main>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <main className="p-4">
+        <p className="text-red-500 font-semibold">{error || "Post not found."}</p>
       </main>
     );
   }
