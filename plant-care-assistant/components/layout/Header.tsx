@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import DashboardModal from "@components/ui/DashboardModal";
 import { useAuth } from "@providers/AuthProvider";
-import logger from "@utils/logger";
 
 export default function Header() {
   const dashboardRef = useRef<HTMLAnchorElement>(null);
