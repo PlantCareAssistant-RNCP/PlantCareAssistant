@@ -212,7 +212,11 @@ export default function FeedList() {
 		<div className="space-y-4 mt-8">
 			{dummyPosts.map((post) => (
 				<div key={post.id}>
-					<Link href={`/post/${post.id}`} className="block">
+					<Link
+						href={`/post/${post.id}`}
+						aria-label={`Ouvrir la publication ${post.id} de ${post.username}`}
+						className="block"
+					>
 						<FeedCard
 							id={post.id}
 							authorId={post.authorId}

@@ -17,12 +17,13 @@ export default function Header() {
   return (
     <header className="fixed top-0 left-0 w-full bg-[#0A1A24] px-4 py-3 flex justify-between items-center h-16 z-50">
       <Link href="/" aria-label="Home">
-        <Icon name="home" size={35} />
+        <Icon name="home" size={35} aria-hidden="true"/>
       </Link>
 
       <div className="flex items-center gap-4">
         <span
-          aria-label="Open the dashboard menu"
+          aria-haspopup="menu"
+          aria-expanded={isModalOpen}
           ref={dashboardRef}
           onClick={() => setIsModalOpen((prev) => !prev)}
           className="cursor-pointer"
@@ -35,7 +36,7 @@ export default function Header() {
             }
           }}
         >
-          <Icon name="dashboard" size={35} />
+          <Icon name="dashboard" size={35} aria-hidden="true" />
         </span>
       </div>
 

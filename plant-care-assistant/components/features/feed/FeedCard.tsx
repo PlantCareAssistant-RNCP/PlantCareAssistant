@@ -12,6 +12,7 @@ export interface FeedCardProps {
 }
 
 export default function FeedCard({
+  id,
   username,
   description,
   imageUrl,
@@ -19,7 +20,11 @@ export default function FeedCard({
   date,
 }: FeedCardProps) {
   return (
-    <div className="bg-[#E8E8E8] text-black rounded-xl shadow-md overflow-hidden space-y-2 p-3">
+    <div
+      role="article"
+      aria-label={`Post by ${username}`}
+      className="bg-[#E8E8E8] text-black rounded-xl shadow-md overflow-hidden space-y-2 p-3"
+    >
       <div className="w-full h-48 rounded-md overflow-hidden relative">
         <Image
           src={imageUrl}
@@ -30,11 +35,13 @@ export default function FeedCard({
       </div>
       <div className="flex justify-between items-center text-sm font-semibold">
         <span>{username}</span>
-        <span className="text-xs text-black">{date}</span>
+        <time dateTime={date} className="text-xs text-black">
+          {date}
+        </time>
       </div>
       <p className="text-sm text-gray-600 line-clamp-2">{description}</p>
       <div className="flex items-center text-sm text-gray-500 gap-1">
-        <Icon name="commentBlack" size={20} className="text-gray-500" />
+        <Icon name="commentBlack" size={20} aria-hidden="true" className="text-gray-500" />
         <span>{commentsCount}</span>
       </div>
     </div>
