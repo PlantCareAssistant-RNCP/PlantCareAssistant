@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import DashboardModal from "@components/ui/DashboardModal";
 import { useAuth } from "@providers/AuthProvider";
+import logger from "@utils/logger";
 
 export default function Header() {
-  const dashboardRef = useRef<HTMLAnchorElement>(null);
+  const dashboardRef = useRef<HTMLElement | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user, isLoading } = useAuth();
 
@@ -15,17 +16,27 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 w-full bg-[#0A1A24] px-4 py-3 flex justify-between items-center h-16 z-50">
-      <Link href={homeRoute}>
-        <Icon name="home" size={35} />
+      <Link href="/" aria-label="Home">
+        <Icon name="home" size={35} aria-hidden="true"/>
       </Link>
 
       <div className="flex items-center gap-4">
         <span
+          aria-haspopup="menu"
+          aria-expanded={isModalOpen}
           ref={dashboardRef}
           onClick={() => setIsModalOpen((prev) => !prev)}
           className="cursor-pointer"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+              e.preventDefault();
+              setIsModalOpen((prev) => !prev);
+            }
+          }}
         >
-          <Icon name="dashboard" size={35} />
+          <Icon name="dashboard" size={35} aria-hidden="true" />
         </span>
       </div>
 
