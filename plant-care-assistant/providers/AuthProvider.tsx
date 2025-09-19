@@ -44,7 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const client = createClient();
       setSupabaseClient(client);
     } catch (error) {
-      logger.error("Failed to initialize Supabase client:", error);
+      logger.error({
+        message: "Failed to initialize Supabase client:",
+        error: error instanceof Error ? error.message : String(error),
+      });
       setIsLoading(false);
       return;
     }
@@ -63,13 +66,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } = await supabaseClient.auth.getUser();
 
         if (error) {
-          logger.info("No active user session:", error.message);
+          if (process.env.NODE_ENV === "development") {
+            logger.info({
+              message: "No active user session:",
+              error: error.message,
+            });
+          }
           setUser(null);
         } else {
           setUser(user);
         }
       } catch (error) {
-        logger.error("Error checking user:", error);
+        logger.error({
+          message: "Error checking user:",
+          error: error instanceof Error ? error.message : String(error),
+        });
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -157,9 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider
-      value={{ user, isLoading, signIn, signUp, signOut }}
-    >
+    <AuthContext.Provider value={{ user, isLoading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

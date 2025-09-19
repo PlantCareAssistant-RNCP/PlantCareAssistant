@@ -178,7 +178,7 @@ export async function PUT(
         return validationErrorResponse(validationResult);
       }
 
-      const photoUrl = await uploadPostImage(imageFile, context.userId);
+      const photoUrl = await uploadPostImage(imageFile);
       if (!photoUrl) {
         logResponse(context, 500, { errorType: "image_upload_failed" });
         return NextResponse.json(

@@ -37,11 +37,6 @@ export default function RegisterForm() {
       await signUp(form.email, form.password, form.username);
       router.push("/login");
     } catch (error) {
-      logger.error("Registration error", {
-        email: form.email,
-        username: form.username,
-        errorMessage: error instanceof Error ? error.message : "Unknown error",
-      });
       setError(
         error instanceof Error
           ? error.message
