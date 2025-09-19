@@ -12,6 +12,7 @@ export interface FeedCardProps {
 }
 
 export default function FeedCard({
+
   id,
   username,
   description,

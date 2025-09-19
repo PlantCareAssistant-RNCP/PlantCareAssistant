@@ -139,6 +139,9 @@ export default function CreatePostPage() {
               className="w-full rounded-md px-3 py-2 text-black"
               required
             />
+            <div className="text-xs text-gray-400 mt-1">
+              Max 100 characters. {title.length}/100
+            </div>
           </section>
 
           {/* Description */}
@@ -155,6 +158,9 @@ export default function CreatePostPage() {
               className="w-full rounded-md px-3 py-2 text-black resize-none min-h-[150px]"
               required
             />
+            <div className="text-xs text-gray-400 mt-1">
+              Max 10,000 characters. {description.length}/10,000
+            </div>
           </section>
 
           {/* Plant selection */}
