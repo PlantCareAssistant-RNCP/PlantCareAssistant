@@ -12,14 +12,54 @@ type Post = {
   date: string;
 };
 
-export default function FeedList() {
+interface FeedListProps {
+  propPosts?: Post[];
+  propLoading?: boolean;
+  propError?: string | null;
+  mode?: "all" | "mine";
+  fetchUrl?: string;
+}
+
+export default function FeedList({
+  propPosts,
+  propLoading,
+  propError,
+  mode = "all",
+  fetchUrl,
+}: FeedListProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const mapToPost = (item: any): Post => ({
+    id: item.post_id ?? item.id,
+    authorId: item.USER?.id ?? item.user_id ?? "",
+    username: item.USER?.username ?? item.username ?? "Unknown",
+    description: item.content ?? item.description ?? "",
+    imageUrl: item.photo ?? item.imageUrl ?? "",
+    commentsCount:
+      item._count?.COMMENT ??
+      (Array.isArray(item.COMMENT) ? item.COMMENT.length : 0) ??
+      0,
+    date: item.created_at ?? item.date ?? "",
+  });
+
   useEffect(() => {
+    if (propPosts) {
+      setPosts(propPosts);
+      setLoading(propLoading ?? false);
+      setError(propError ?? null);
+      return;
+    }
+    const endpoint =
+      fetchUrl ?? (mode === "mine" ? "/api/social/posts" : "/api/social/feed");
     setLoading(true);
-    fetch("/api/social/feed")
+    setError(null);
+
+    fetch(endpoint, {
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+    })
       .then(async (res) => {
         if (!res.ok) {
           const data = await res.json();
@@ -27,29 +67,14 @@ export default function FeedList() {
         }
         return res.json();
       })
-      .then((data) => {
-        setPosts(
-          data.map((post: any): Post => ({
-            id: post.post_id,
-            authorId: post.USER?.id ?? "",
-            username: post.USER?.username ?? "Unknown",
-            description: post.content,
-            imageUrl: post.photo,
-            commentsCount: post._count?.COMMENT ?? 0,
-            date: post.created_at,
-          }))
-        );
-      })
+      .then((data) => setPosts(data.map(mapToPost)))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [propPosts, propLoading, propError, mode, fetchUrl]);
 
   if (loading) {
     return (
-      <p
-        className="text-gray-400 text-center mt-10"
-        role="status"
-      >
+      <p className="text-gray-400 text-center mt-10" role="status">
         Loading...
       </p>
     );
@@ -57,10 +82,7 @@ export default function FeedList() {
 
   if (error) {
     return (
-      <p
-        className="text-red-400 text-center mt-10"
-        role="alert"
-      >
+      <p className="text-red-400 text-center mt-10" role="alert">
         {error}
       </p>
     );

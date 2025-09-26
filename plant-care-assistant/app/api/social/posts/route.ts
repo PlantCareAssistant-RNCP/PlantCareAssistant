@@ -38,9 +38,9 @@ export async function GET(request: NextRequest) {
       deleted_at: null,
     };
 
-    if (userIdParam) {
-      where.user_id = url.searchParams.get("userId")!;
-    }
+    // If no userId param is provided, default to current user's posts
+    // If userId param is provided, filter by that user
+    where.user_id = userIdParam || context.userId;
 
     if (plantId) {
       where.plant_id = plantId;
@@ -74,10 +74,11 @@ export async function GET(request: NextRequest) {
 
     logResponse(context, 200, {
       postCount: posts.length,
-      hasUserFilter: !!userIdParam,
+      hasUserFilter: true,
       hasPlantFilter: !!plantId,
-      filterUserId: userIdParam,
+      filterUserId: userIdParam || context.userId,
       filterPlantId: plantId,
+      isCurrentUser: !userIdParam,
     });
 
     return NextResponse.json(posts, { status: 200 });
@@ -154,7 +155,11 @@ export async function POST(request: NextRequest) {
     // Only accept a pre-uploaded image URL
     const photoUrl = formData.get("photo") as string | null;
     let finalPhotoUrl = null;
-    if (photoUrl && typeof photoUrl === "string" && photoUrl.startsWith("http")) {
+    if (
+      photoUrl &&
+      typeof photoUrl === "string" &&
+      photoUrl.startsWith("http")
+    ) {
       finalPhotoUrl = photoUrl;
     }
 
@@ -172,6 +177,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(newPost, { status: 201 });
   } catch (error) {
     logError(context, error as Error, { operation: "create_post" });
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
