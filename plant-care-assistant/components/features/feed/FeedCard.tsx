@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Icon from "@components/common/Icon";
+import Link from "next/link";
 
 export interface FeedCardProps {
   id: number;
@@ -12,7 +13,6 @@ export interface FeedCardProps {
 }
 
 export default function FeedCard({
-
   id,
   username,
   description,

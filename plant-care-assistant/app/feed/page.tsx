@@ -8,7 +8,7 @@ export default function FeedPage() {
   return (
     <main className="p-4 pb-20 pt-20">
       <h1 className="text-xl font-bold mb-4">Feed</h1>
-      <FeedList />
+      <FeedList mode='all' />
 
       {/* Bouton flottant */}
       <Link href="/createpost">
