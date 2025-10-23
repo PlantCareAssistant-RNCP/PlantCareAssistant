@@ -34,17 +34,19 @@ export async function logRequest(
     const userId = await getUserIdFromSupabase(request);
     context.userId = userId === null ? undefined : userId;
 
-    logger.info("API Request", {
+    logger.info({
       requestId: context.requestId,
       userId,
       endpoint: context.endpoint,
       method: context.method,
       userAgent: context.userAgent,
+      message: "API Request",
     });
   } catch (error) {
-    logger.warn("Could not extract user context", {
+    logger.warn({
       requestId: context.requestId,
       error: error instanceof Error ? error.message : "Unknown error",
+      message: "Could not extract user context",
     });
   }
 }
@@ -56,7 +58,7 @@ export function logResponse(
 ) {
   const duration = Date.now() - context.startTime;
 
-  logger.info("API Response", {
+  logger.info({
     requestId: context.requestId,
     userId: context.userId,
     endpoint: context.endpoint,
@@ -64,6 +66,7 @@ export function logResponse(
     status,
     duration: `${duration}ms`,
     ...additionalData,
+    message: "API Response",
   });
 }
 
@@ -74,7 +77,7 @@ export function logError(
 ) {
   const duration = Date.now() - context.startTime;
 
-  logger.error("API Error", {
+  logger.error({
     requestId: context.requestId,
     userId: context.userId,
     endpoint: context.endpoint,
@@ -83,5 +86,6 @@ export function logError(
     stack: error.stack,
     duration: `${duration}ms`,
     ...additionalData,
+    message: "API Error",
   });
 }

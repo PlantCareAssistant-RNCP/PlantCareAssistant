@@ -3,15 +3,24 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { uploadPostImage } from "@utils/images"; // your helper
+import { uploadPostImage } from "@utils/images";
+
+interface Plant {
+  plant_id: number;
+  plant_name: string;
+  photo: string;
+  PLANT_TYPE?: {
+    plant_type_name: string;
+  };
+  Event: Event[];
+}
 
 export default function CreatePostPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [plantId, setPlantId] = useState("");
-  const [plants, setPlants] = useState<any[]>([]);
+  const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -28,7 +37,6 @@ export default function CreatePostPage() {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
@@ -70,8 +78,12 @@ export default function CreatePostPage() {
 
       setSuccess(true);
       router.push("/myfeed");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -127,6 +139,9 @@ export default function CreatePostPage() {
               className="w-full rounded-md px-3 py-2 text-black"
               required
             />
+            <div className="text-xs text-gray-400 mt-1">
+              Max 100 characters. {title.length}/100
+            </div>
           </section>
 
           {/* Description */}
@@ -143,6 +158,9 @@ export default function CreatePostPage() {
               className="w-full rounded-md px-3 py-2 text-black resize-none min-h-[150px]"
               required
             />
+            <div className="text-xs text-gray-400 mt-1">
+              Max 10,000 characters. {description.length}/10,000
+            </div>
           </section>
 
           {/* Plant selection */}

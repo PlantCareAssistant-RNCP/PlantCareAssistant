@@ -30,10 +30,11 @@ export default function LoginForm() {
       await signIn(form.email, form.password);
       router.push("/dashboard"); // Redirect to dashboard after successful login
     } catch (error) {
-      logger.error("Login error", {
+      logger.error({
         email: form.email,
         errorMessage: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
+        message: "Login error",
       });
       setError(
         error instanceof Error

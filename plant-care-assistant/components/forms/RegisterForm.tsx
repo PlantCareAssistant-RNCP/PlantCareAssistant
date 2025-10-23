@@ -5,7 +5,6 @@ import Link from "next/link";
 import Logo from "@components/common/Logo";
 import { useAuth } from "../../providers/AuthProvider";
 import { useRouter } from "next/navigation";
-import logger from "@utils/logger";
 
 export default function RegisterForm() {
   const [form, setForm] = useState({
@@ -15,12 +14,29 @@ export default function RegisterForm() {
     confirmPassword: "",
   });
   const [error, setError] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useAuth();
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+
+    if (name === "username") {
+      // Minimal client-side validation to give immediate feedback
+      if (value.length < 3) {
+        setUsernameError("Username must be at least 3 characters long");
+      } else if (value.length > 30) {
+        setUsernameError("Username cannot exceed 30 characters in length");
+      } else if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+        setUsernameError(
+          "Username can only contain letters, numbers, and underscores"
+        );
+      } else {
+        setUsernameError(null);
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -34,14 +50,13 @@ export default function RegisterForm() {
 
     try {
       setIsLoading(true);
+      // Prevent submit if username invalid client-side
+      if (usernameError) {
+        throw new Error(usernameError);
+      }
       await signUp(form.email, form.password, form.username);
       router.push("/login");
     } catch (error) {
-      logger.error("Registration error", {
-        email: form.email,
-        username: form.username,
-        errorMessage: error instanceof Error ? error.message : "Unknown error",
-      });
       setError(
         error instanceof Error
           ? error.message
@@ -86,6 +101,11 @@ export default function RegisterForm() {
             placeholder="JaneDoe123"
             required
           />
+          {usernameError && (
+            <p className="text-red-300 text-sm" role="alert">
+              {usernameError}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">

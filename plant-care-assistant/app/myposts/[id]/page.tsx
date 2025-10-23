@@ -9,7 +9,7 @@ export default function EditPostPage() {
   const { id } = useParams();
   const router = useRouter();
 
-  const currentUserId = 6; // ou celui que tu veux
+  const currentUserId = "6"; // ou celui que tu veux
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [description, setDescription] = useState('');

@@ -76,18 +76,20 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         });
 
         if (!response.ok) {
-          logger.error("Plants fetch failed", {
+          logger.error({
             endpoint: "/api/plants",
             status: response.status,
+            message: "Plants fetch failed",
           });
         } else {
           const data = await response.json();
           setPlants(data);
         }
       } catch (err) {
-        logger.error("Plants fetch network error", {
+        logger.error({
           endpoint: "/api/plants",
           error: err instanceof Error ? err.message : "Unknown error",
+          message: "Plants fetch network error",
         });
       } finally {
         setIsLoadingPlants(false);
@@ -150,11 +152,12 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         onEventCreated();
         onClose();
       } else {
-        logger.error("Event creation failed", {
+        logger.error({
           endpoint: `/api/users/${user.id}/events`,
           status: response.status,
           eventTitle: title.trim(),
           hasPlant: plantId !== "",
+          message: "Event creation failed",
         });
 
         const errorData = await response.json();
@@ -163,10 +166,11 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         );
       }
     } catch (err) {
-      logger.error("Event creation network error", {
+      logger.error({
         endpoint: `/api/users/${user.id}/events`,
         error: err instanceof Error ? err.message : "Unknown error",
         eventTitle: title.trim(),
+        message: "Event creation network error",
       });
       setError("Failed to create event. Please try again.");
     } finally {
@@ -303,7 +307,9 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   }}
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-2"
                 />
-                <span className="text-sm text-gray-900">Repeat Weekly (52 weeks)</span>
+                <span className="text-sm text-gray-900">
+                  Repeat Weekly (52 weeks)
+                </span>
               </label>
 
               <label className="flex items-center">
@@ -316,7 +322,9 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   }}
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mr-2"
                 />
-                <span className="text-sm text-gray-900">Repeat Monthly (12 months)</span>
+                <span className="text-sm text-gray-900">
+                  Repeat Monthly (12 months)
+                </span>
               </label>
             </div>
           </div>

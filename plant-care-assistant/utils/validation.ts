@@ -19,8 +19,8 @@ export interface EventInput extends BaseRecord {
   start?: unknown;
   end?: unknown;
   plantId?: unknown;
-  repeatWeekly?: unknown;    
-  repeatMonthly?: unknown;   
+  repeatWeekly?: unknown;
+  repeatMonthly?: unknown;
 }
 
 export interface PlantInput extends BaseRecord {
@@ -49,7 +49,7 @@ export interface ValidEvent {
   title: string;
   start: Date;
   end: Date;
-  plantId?: number; 
+  plantId?: number;
   repeatWeekly?: boolean;
   repeatMonthly?: boolean;
 }
@@ -136,7 +136,6 @@ export function validateDateRange(
       };
     }
 
-
     if (startDateTime > endDateTime) {
       return {
         error: "Start time must be earlier than end time",
@@ -150,10 +149,13 @@ export function validateDateRange(
     if (startDay < todayDay) {
       return { error: "Start time cannot be before today", status: 400 };
     }
-    
+
     return null;
   } catch (error) {
-    logger.error("Date range validation error:", error);
+    logger.error({
+      message: "Date range validation error:",
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       error: "Invalid date format",
       status: 400,
@@ -209,7 +211,7 @@ export function validateEvent(body: EventInput): ValidationError | ValidEvent {
     if (typeof body.repeatMonthly !== "undefined") {
       if (typeof body.repeatMonthly !== "boolean") {
         return {
-          error: "repeatMonthly must be a boolean", 
+          error: "repeatMonthly must be a boolean",
           status: 400,
         };
       }
@@ -232,15 +234,19 @@ export function validateEvent(body: EventInput): ValidationError | ValidEvent {
           : typeof body.plantId === "string"
           ? parseInt(body.plantId)
           : undefined,
-          repeatWeekly: body.repeatWeekly,
-          repeatMonthly: body.repeatMonthly,
+      repeatWeekly: body.repeatWeekly,
+      repeatMonthly: body.repeatMonthly,
     };
   } catch (error) {
-    logger.error("Event validation error:", error);
-    logger.error("Problematic input:", {
+    logger.error({
+      message: "Event validation error:",
+      error: error instanceof Error ? error.message : String(error),
+    });
+    logger.error({
       title: body.title,
       start: body.start,
       end: body.end,
+      message: "Problematic input:",
     });
     return {
       error: "Invalid date format",
@@ -259,8 +265,11 @@ export function validatePlant(body: PlantInput): ValidationError | ValidPlant {
   if (requiredError) return requiredError;
 
   // Type checking
-  if (typeof body.plant_name !== "string") {
-    return { error: "Plant name must be a string", status: 400 };
+  if (
+    typeof body.plant_name !== "string" ||
+    body.plant_name.trim().length === 0
+  ) {
+    return { error: "Plant name must be a non-empty string", status: 400 };
   }
 
   let plantTypeId: number;
@@ -366,7 +375,7 @@ export function validateUser(body: UserInput): ValidationError | ValidUser {
 }
 
 // Post validator
-export function validatePost(body: PostInput): ValidationError | ValidPost {
+export function validatePost(body: any): ValidationError | ValidPost {
   const requiredError = validateRequiredFields(body, [
     "title",
     "content",
@@ -374,13 +383,20 @@ export function validatePost(body: PostInput): ValidationError | ValidPost {
   ]);
   if (requiredError) return requiredError;
 
-  // Type validation and conversion
-  if (typeof body.title !== "string") {
-    return { error: "Title must be a string", status: 400 };
+  // Title length check
+  if (typeof body.title !== "string" || body.title.trim().length === 0) {
+    return { error: "Title is required", status: 400 };
+  }
+  if (body.title.length > 100) {
+    return { error: "Title must be 100 characters or fewer", status: 400 };
   }
 
-  if (typeof body.content !== "string") {
-    return { error: "Content must be a string", status: 400 };
+  // Content length check
+  if (typeof body.content !== "string" || body.content.trim().length === 0) {
+    return { error: "Content is required", status: 400 };
+  }
+  if (body.content.length > 10000) {
+    return { error: "Content must be 10,000 characters or fewer", status: 400 };
   }
 
   let plantId: number;
@@ -419,6 +435,15 @@ export function validateComment(
 
   if (typeof body.content !== "string") {
     return { error: "Comment content must be a string", status: 400 };
+  }
+  if (body.content.length > 10000) {
+    return { error: "Content must be 10,000 characters or fewer", status: 400 };
+  }
+
+  if (body.photo !== undefined) {
+    if (body.photo !== null && typeof body.photo !== "string") {
+      return { error: "Photo must be a URL string or null", status: 400 };
+    }
   }
 
   return {
@@ -635,6 +660,9 @@ export function validatePartialPost(
     if (typeof body.title !== "string") {
       return { error: "Title must be a string", status: 400 };
     }
+    if (body.title.length > 100) {
+      return { error: "Title must be 100 characters or fewer", status: 400 };
+    }
     result.title = body.title;
   }
 
@@ -642,6 +670,9 @@ export function validatePartialPost(
   if (body.content !== undefined) {
     if (typeof body.content !== "string") {
       return { error: "Content must be a string", status: 400 };
+    }
+    if (body.content.length > 10000) {
+      return { error: "Content must be 10,000 characters or fewer", status: 400 };
     }
     result.content = body.content;
   }
@@ -685,7 +716,10 @@ export function validatePartialEvent(
       }
       result.start = startDate;
     } catch (error) {
-      logger.error("Start date validation error:", error);
+      logger.error({
+        message: "Start date validation error:",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return { error: "Invalid start date format", status: 400 };
     }
   }
@@ -699,7 +733,10 @@ export function validatePartialEvent(
       }
       result.end = endDate;
     } catch (error) {
-      logger.error("End date validation error:", error);
+      logger.error({
+        message: "End date validation error:",
+        error: error instanceof Error ? error.message : String(error),
+      });
       return { error: "Invalid end date format", status: 400 };
     }
   }
@@ -747,7 +784,7 @@ export function validatePartialEvent(
     result.repeatWeekly = body.repeatWeekly;
   }
 
-  // Validate repeatMonthly if provided  
+  // Validate repeatMonthly if provided
   if (body.repeatMonthly !== undefined) {
     if (typeof body.repeatMonthly !== "boolean") {
       return {

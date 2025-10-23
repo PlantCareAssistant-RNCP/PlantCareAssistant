@@ -123,16 +123,20 @@ model UserPlant {
 }
 
 model Event {
-  id        Int         @id @default(autoincrement())
-  title     String
-  start     DateTime
-  end       DateTime?
-  user      UserProfile @relation(fields: [userId], references: [id])
-  userId    String      @db.Uuid
-  plant     Plant?      @relation(fields: [plantId], references: [plant_id])
-  plantId   Int?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id                Int         @id @default(autoincrement())
+  title             String
+  start             DateTime
+  end               DateTime?
+  user              UserProfile @relation(fields: [userId], references: [id])
+  userId            String      @db.Uuid
+  plant             Plant?      @relation(fields: [plantId], references: [plant_id])
+  plantId           Int?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  parentEventId     Int?
+  parentEvent       Event?   @relation("ParentChild", fields: [parentEventId], references: [id])
+  childEvents       Event[]  @relation("ParentChild")
+  isRecurringInstance Boolean @default(false)
 
   @@map("EVENT")
 }
