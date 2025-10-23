@@ -3,57 +3,132 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { dummyPosts } from "@components/features/feed/FeedList";
+import { useAuth } from "providers/AuthProvider";
 
 export default function EditPostPage() {
   const { id } = useParams();
   const router = useRouter();
+  const postId = Number(id);
+
+  const { user: currentUser } = useAuth();
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [originalPhoto, setOriginalPhoto] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const post = dummyPosts.find((p) => p.id === Number(id));
-
-    if (!post) {
-      setError('Post not found.');
+    if (!postId || isNaN(postId)) {
+      setError("Invalid post id.");
+      setLoading(false);
       return;
     }
 
-    if (post.username !== "John Doe") {
-      setError('Access denied. You are not allowed to edit this post.');
-      return;
-    }
+    (async () => {
+      try {
+        const res = await fetch(`/api/social/posts/${postId}`);
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to fetch post");
+        }
+        const data = await res.json();
 
-    setDescription(post.description);
-    setImagePreview(post.imageUrl);
-  }, [id]);
+        // Verify ownership if we have currentUser
+        if (currentUser && data.USER?.id && data.USER.id !== currentUser.id) {
+          setError("Access denied. You are not allowed to edit this post.");
+          setLoading(false);
+          return;
+        }
+
+        setDescription(data.content ?? "");
+        setImagePreview(data.photo ?? null);
+        setOriginalPhoto(data.photo ?? null);
+      } catch (err: any) {
+        setError(err.message || "Failed to load post");
+      } finally {
+        setLoading(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, currentUser?.id]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0] ?? null;
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+      setImageFile(file);
+    } else {
+      // user cleared the file input
+      setImageFile(null);
+      setImagePreview(null);
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('✅ Post updated:', { id, description, imagePreview });
-    setMessage('Post updated successfully ✅');
+    setMessage(null);
+    setError(null);
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("content", description);
+      // append image file if user selected one
+      if (imageFile) {
+        formData.append("image", imageFile);
+      } else {
+        // if original had an image but preview is now null, tell backend to remove
+        if (originalPhoto && !imagePreview) {
+          formData.append("removeImage", "true");
+        }
+      }
+
+      const res = await fetch(`/api/social/posts/${postId}`, {
+        method: "PUT",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update post");
+      }
+
+      const updated = await res.json();
+      setMessage("Post updated successfully ✅");
+      // Redirect to post page after short delay
+      setTimeout(() => router.push(`/post/${postId}`), 800);
+    } catch (err: any) {
+      setError(err.message || "Failed to save post");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = () => {
-    console.log('❌ Post deleted:', id);
-    setMessage('Post deleted');
-    setTimeout(() => {
-      router.push('/myfeed');
-    }, 1500);
+  const handleDelete = async () => {
+    // Call delete endpoint (soft delete)
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/social/posts/${postId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete post");
+      }
+      setMessage("Post deleted");
+      setTimeout(() => router.push('/myfeed'), 800);
+    } catch (err: any) {
+      setError(err.message || "Failed to delete post");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -62,6 +137,14 @@ export default function EditPostPage() {
       return () => clearTimeout(timer);
     }
   }, [message]);
+
+  if (loading) {
+    return (
+      <main className="flex justify-center items-center h-screen px-4">
+        <p className="text-gray-400">Loading...</p>
+      </main>
+    );
+  }
 
   if (error) {
     return (
@@ -147,7 +230,7 @@ export default function EditPostPage() {
               className="bg-[#0A9788] hover:bg-teal-700 text-white px-6 py-2 rounded-full transition"
               aria-label="Save post changes"
             >
-              Save
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
         </form>
