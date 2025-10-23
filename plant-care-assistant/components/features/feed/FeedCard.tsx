@@ -20,6 +20,17 @@ export default function FeedCard({
   commentsCount,
   date,
 }: FeedCardProps) {
+  const formatDate = (dateString: string) => {
+    const dateObj = new Date(dateString);
+    return dateObj.toLocaleString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
     <div
       role="article"
@@ -37,7 +48,7 @@ export default function FeedCard({
       <div className="flex justify-between items-center text-sm font-semibold">
         <span>{username}</span>
         <time dateTime={date} className="text-xs text-black">
-          {date}
+          {formatDate(date)}
         </time>
       </div>
       <p className="text-sm text-gray-600 line-clamp-2">{description}</p>
