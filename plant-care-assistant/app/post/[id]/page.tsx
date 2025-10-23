@@ -11,8 +11,7 @@ import AddCommentInput from "@components/forms/AddCommentInput";
 type Comment = {
   id: number;
   username: string;
-  date: string;
-  time: string;
+  date: string; // now stores raw created_at ISO string
   text: string;
 };
 
@@ -23,7 +22,7 @@ type Post = {
   description: string;
   imageUrl: string;
   commentsCount: number;
-  date: string;
+  date: string; // raw created_at ISO string
   comments: Comment[];
 };
 
@@ -39,6 +38,19 @@ export default function PostPage() {
   const [commentContent, setCommentContent] = useState("");
   const [commentError, setCommentError] = useState<string | null>(null);
   const [commentLoading, setCommentLoading] = useState(false);
+
+  // same formatting as FeedCard
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Non daté";
+    const dateObj = new Date(dateString);
+    return dateObj.toLocaleString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -63,8 +75,7 @@ export default function PostPage() {
           comments: (data.COMMENT ?? []).map((c: any) => ({
             id: c.comment_id,
             username: c.USER?.username ?? "Anonymous",
-            date: c.created_at ? new Date(c.created_at).toLocaleDateString() : "",
-            time: c.created_at ? new Date(c.created_at).toLocaleTimeString() : "",
+            date: c.created_at ?? "",
             text: c.content,
           })),
         });
@@ -115,8 +126,7 @@ export default function PostPage() {
         comments: (updatedPostData.COMMENT ?? []).map((c: any) => ({
           id: c.comment_id,
           username: c.USER?.username ?? "Anonymous",
-          date: c.created_at ? new Date(c.created_at).toLocaleDateString() : "",
-          time: c.created_at ? new Date(c.created_at).toLocaleTimeString() : "",
+          date: c.created_at ?? "",
           text: c.content,
         })),
       });
@@ -163,7 +173,7 @@ export default function PostPage() {
           <div className="rounded-xl p-2 space-y-2">
             <div className="flex justify-between text-sm font-semibold text-black">
               <span>{post.username}</span>
-              <span>{post.date ?? "Non daté"}</span>
+              <span>{formatDate(post.date) ?? ""}</span>
             </div>
             <p className="text-sm text-gray-700">{post.description}</p>
             <div className="flex items-center gap-1 text-sm text-gray-600 mt-2">
@@ -197,7 +207,7 @@ export default function PostPage() {
                 <div className="flex justify-between font-semibold text-black">
                   <span>{comment.username}</span>
                   <span className="text-xs text-gray-500">
-                    {comment.date} {comment.time}
+                    {formatDate(comment.date)}
                   </span>
                 </div>
                 <p className="mt-1 text-gray-700">{comment.text}</p>
@@ -228,8 +238,7 @@ export default function PostPage() {
               comments: (updatedPostData.COMMENT ?? []).map((comment: any) => ({
                 id: comment.comment_id,
                 username: comment.USER?.username ?? "Anonymous",
-                date: comment.created_at ? new Date(comment.created_at).toLocaleDateString() : "",
-                time: comment.created_at ? new Date(comment.created_at).toLocaleTimeString() : "",
+                date: comment.created_at ?? "",
                 text: comment.content,
               })),
             });
