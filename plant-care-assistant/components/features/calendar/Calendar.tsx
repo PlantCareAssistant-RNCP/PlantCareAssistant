@@ -149,11 +149,26 @@ const CalendarPage: React.FC = () => {
 
   return (
     <div className="p-4 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold text-center mb-6 text-green-700">
+      <h1
+        className="text-3xl font-bold text-center mb-6 text-green-700"
+        id="calendar-title"
+      >
         Plant Care Calendar
       </h1>
-      {isLoading && <p className="text-center">Loading events...</p>}
-      {error && <p className="text-center text-red-500">{error}</p>}
+      {isLoading && (
+        <p className="text-center" role="status" aria-live="polite">
+          Loading events...
+        </p>
+      )}
+      {error && (
+        <p
+          className="text-center text-red-500"
+          role="alert"
+          aria-live="assertive"
+        >
+          {error}
+        </p>
+      )}
       <Calendar
         selectable
         onSelectEvent={(event) => {

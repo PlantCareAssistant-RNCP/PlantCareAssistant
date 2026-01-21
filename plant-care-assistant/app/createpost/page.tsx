@@ -91,7 +91,7 @@ export default function CreatePostPage() {
 
   return (
     <div className="pt-20 px-6">
-      <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-start gap-6">
+      <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-start gap-6 pb-24">
         {imagePreview && (
           <div className="w-full max-w-md h-48 relative rounded-md overflow-hidden bg-gray-800 mb-4">
             <Image
