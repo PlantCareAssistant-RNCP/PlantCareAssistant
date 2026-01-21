@@ -40,7 +40,7 @@ export default function FeedCard({
       <div className="w-full h-48 rounded-md overflow-hidden relative">
         <Image
           src={imageUrl}
-          alt={`Post by ${author}`}
+          alt={`Post by ${username}`}
           fill
           className="object-cover"
         />
