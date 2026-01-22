@@ -35,6 +35,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.16",
     "@eslint/eslintrc": "^3",
     "@jest/globals": "^30.0.0-beta.3",
     "@playwright/test": "^1.52.0",
