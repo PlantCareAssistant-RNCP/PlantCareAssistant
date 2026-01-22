@@ -3,7 +3,6 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { dummyPosts } from '@components/features/feed/FeedList';
 
 export default function EditPostPage() {
   const { id } = useParams();
@@ -17,21 +16,37 @@ export default function EditPostPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const post = dummyPosts.find((p) => p.id === Number(id));
-
-    if (!post) {
-      setError('Post not found.');
-      return;
-    }
-
-    if (post.authorId !== currentUserId) {
-      setError('Access denied. You are not allowed to edit this post.');
-      return;
-    }
-
-    setDescription(post.description);
-    setImagePreview(post.imageUrl);
-  }, [id]);
+    const fetchPost = async () => {
+      if (!id) return;
+      
+      try {
+        const response = await fetch(`/api/social/posts/${id}`);
+        
+        if (!response.ok) {
+          const data = await response.json();
+          setError(data.error || 'Post not found.');
+          return;
+        }
+        
+        const post = await response.json();
+        
+        // Check if current user is the author
+        if (post.USER?.id !== currentUserId && post.user_id !== currentUserId) {
+          setError('Access denied. You are not allowed to edit this post.');
+          return;
+        }
+        
+        // Load post data into form
+        setDescription(post.content || post.description || '');
+        setImagePreview(post.photo || post.imageUrl || null);
+      } catch (err) {
+        console.error('Error fetching post:', err);
+        setError('Failed to load post.');
+      }
+    };
+    
+    fetchPost();
+  }, [id, currentUserId]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
