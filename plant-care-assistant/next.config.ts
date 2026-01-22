@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   serverExternalPackages: ["sharp"],
-    eslint: {
+  eslint: {
     ignoreDuringBuilds: true,
   },
 };

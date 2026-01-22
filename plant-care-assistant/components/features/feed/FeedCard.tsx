@@ -40,7 +40,7 @@ export default function FeedCard({
       <div className="w-full h-48 rounded-md overflow-hidden relative">
         <Image
           src={imageUrl}
-          alt={`Post by ${username}`}
+          alt={`Post by ${author}`}
           fill
           className="object-cover"
         />
@@ -52,6 +52,7 @@ export default function FeedCard({
         </time>
       </div>
       <p className="text-sm text-gray-600 line-clamp-2">{description}</p>
+
       <div className="flex items-center text-sm text-gray-500 gap-1">
         <Icon name="commentBlack" size={20} aria-hidden="true" className="text-gray-500" />
         <span>{commentsCount}</span>
