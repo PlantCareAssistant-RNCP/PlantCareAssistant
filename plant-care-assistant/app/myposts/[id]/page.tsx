@@ -23,17 +23,20 @@ export default function EditPostPage() {
         const response = await fetch(`/api/social/posts/${id}`);
         
         if (!response.ok) {
-          setError('Post not found.');
+          const data = await response.json();
+          setError(data.error || 'Post not found.');
           return;
         }
         
         const post = await response.json();
         
+        // Check if current user is the author
         if (post.USER?.id !== currentUserId && post.user_id !== currentUserId) {
           setError('Access denied. You are not allowed to edit this post.');
           return;
         }
         
+        // Load post data into form
         setDescription(post.content || post.description || '');
         setImagePreview(post.photo || post.imageUrl || null);
       } catch (err) {
