@@ -121,14 +121,15 @@ The fastest way to get Plant Care Assistant running locally is using Docker. Thi
 
    ```bash
    git clone https://github.com/PlantCareAssistant-RNCP/PlantCareAssistant.git
-   cd PlantCareAssistant
+   cd PlantCareAssistant/plant-care-assistant
    ```
 
 2. **Copy the environment file and edit with your Supabase credentials:**
 
    ```bash
-   cp plant-care-assistant/.env.example plant-care-assistant/.env
-   # Edit plant-care-assistant/.env with your own Supabase credentials
+   cp .env.example .env
+   # Edit .env with your Supabase credentials
+   nano .env
    ```
 
 3. **Start the application using Docker Compose:**
@@ -136,6 +137,8 @@ The fastest way to get Plant Care Assistant running locally is using Docker. Thi
    ```bash
    docker compose up
    ```
+
+   This builds the Docker image and starts the application on port 3000.
 
 4. **Access the application:**
    Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -147,23 +150,23 @@ The fastest way to get Plant Care Assistant running locally is using Docker. Thi
 The following environment variables are required. You can copy the provided `.env.example` file and update it with your credentials:
 
 ```bash
-# Database URLs (Prisma)
+# Database URLs (from Supabase)
 DATABASE_URL="postgresql://your_user:your_password@your_host:6543/postgres?pgbouncer=true"
 DIRECT_URL="postgresql://your_user:your_password@your_host:5432/postgres"
 
-# Supabase Configuration
+# Supabase Configuration (from Supabase dashboard)
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-
-# Supabase Service Role Key (for file uploads)
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# Optional: Development settings
-# NODE_ENV="development"
-# LOG_LEVEL="debug"
+# Development settings
+NODE_ENV=development
+LOG_LEVEL=debug
 ```
 
-> **Note**: Replace `your_user`, `your_password`, `your_host`, `your-project-id`, `your_anon_key`, and `your_service_role_key` with your actual database and Supabase credentials. The `.env.example` file in the repository provides a template with all required variables.
+**Note:** The `.env` file is gitignored — each developer creates their own. It's never committed to keep credentials secure.
+
+**For Production:** Configure environment variables directly in your deployment platform (Vercel, Railway, etc.) instead of using `.env` files.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
