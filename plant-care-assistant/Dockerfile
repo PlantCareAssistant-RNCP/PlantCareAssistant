@@ -17,6 +17,7 @@ COPY . .
 ENV NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder-key
 ENV DATABASE_URL=postgresql://placeholder
+ENV DIRECT_URL=postgresql://placeholder
 
 # Ensure Prisma Client is generated before building
 RUN npm run prisma:generate
