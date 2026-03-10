@@ -5,8 +5,8 @@ services:
       - "3000:3000"
     volumes:
       - .:/app
+      - /app/.next
+      - /app/node_modules
       - ./database:/app/database
     env_file:
       - .env
-    environment:
-      - NODE_ENV=development
